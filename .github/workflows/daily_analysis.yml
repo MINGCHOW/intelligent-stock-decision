@@ -1,0 +1,131 @@
+name: 每日股票分析
+
+on:
+  # 定时触发 - 每天北京时间 18:00 (UTC 10:00)
+  schedule:
+    - cron: '0 10 * * 1-5'  # 周一到周五，UTC 10:00 = 北京时间 18:00
+  
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '运行模式'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - full          # 完整分析（股票+大盘）
+          - market-only   # 仅大盘复盘
+          - stocks-only   # 仅股票分析
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置 Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: 安装依赖
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: 创建必要目录
+        run: |
+          mkdir -p data logs reports
+      
+      - name: 执行股票分析
+        env:
+          # Gemini AI
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ secrets.GEMINI_MODEL || 'gemini-3-flash-preview' }}
+          GEMINI_MODEL_FALLBACK: ${{ secrets.GEMINI_MODEL_FALLBACK || 'gemini-2.5-flash' }}
+          GEMINI_REQUEST_DELAY: '3.0'  # GitHub Actions 建议增加延时
+          
+          # 数据源 (可选)
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+
+          # 搜索服务（用于第四层舆情过滤）
+          # ⚠️ 至少配置一个搜索引擎，推荐使用 Tavily
+          BOCHA_API_KEYS: ${{ secrets.BOCHA_API_KEYS }}
+          TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
+          SERPAPI_API_KEYS: ${{ secrets.SERPAPI_API_KEYS }}
+          
+          # OpenAI 兼容 API（备选）
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+          
+          # 通知渠道（可同时配置多个，全部推送）
+          # 方式一：企业微信
+          WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
+          # 方式二：飞书
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          # 方式三：Telegram（需同时配置 Bot Token 和 Chat ID）
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # 方式四：邮件（只需邮箱和授权码，SMTP自动识别）
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECEIVERS: ${{ secrets.EMAIL_RECEIVERS }}
+          # 方式五：自定义 Webhook（支持钉钉、Discord、Slack、Bark等，多个用逗号分隔）
+          CUSTOM_WEBHOOK_URLS: ${{ secrets.CUSTOM_WEBHOOK_URLS }}
+          # 方式六：飞书文档
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+          FEISHU_FOLDER_TOKEN: ${{ secrets.FEISHU_FOLDER_TOKEN }}
+
+          
+          # 自选股列表 (从 secrets 或使用默认值)
+          STOCK_LIST: ${{ secrets.STOCK_LIST || '600519' }}
+          
+          # 其他配置
+          LOG_LEVEL: INFO
+          DATA_DAYS: 60
+          MAX_CONCURRENT: 3
+        run: |
+          # 判断运行模式
+          MODE="${{ github.event.inputs.mode || 'full' }}"
+          
+          echo "=========================================="
+          echo "运行模式: $MODE"
+          echo "自选股: $STOCK_LIST"
+          echo "时间: $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')"
+          echo "舆情搜索: $([ -n "$TAVILY_API_KEYS$SERPAPI_API_KEYS$BOCHA_API_KEYS" ] && echo '已启用（第四层过滤）' || echo '未启用')"
+          echo "=========================================="
+          
+          if [ "$MODE" = "market-only" ]; then
+            python main.py --market-review
+          elif [ "$MODE" = "stocks-only" ]; then
+            python main.py --no-market-review
+          else
+            python main.py
+          fi
+      
+      - name: 上传分析报告
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: analysis-reports-${{ github.run_number }}
+          path: |
+            reports/
+            logs/
+          retention-days: 30
+      
+      - name: 显示运行结果
+        if: always()
+        run: |
+          echo "=========================================="
+          echo "分析完成"
+          echo "=========================================="
+          if [ -d "reports" ]; then
+            echo "生成的报告:"
+            ls -la reports/
+          fi
