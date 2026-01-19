@@ -1,198 +1,198 @@
-# 📖 Intelligent Stock Decision - 完整配置与部署指南
+# 📖 Intelligent Stock Decision - Complete Configuration & Deployment Guide
 
-本文档包含 **Intelligent Stock Decision System** 的完整配置说明，适合需要高级功能或特殊部署方式的用户。
+This document contains the complete configuration instructions for the **Intelligent Stock Decision System**, designed for users who need advanced features or special deployment methods.
 
-> 💡 快速上手请参考 [README.md](../README.md)，本文档为进阶配置。
+> 💡 For quick start, please refer to [README.md](../README.md). This document covers advanced configuration.
 
-## 📑 目录
+## 📑 Table of Contents
 
-- [GitHub Actions 详细配置](#github-actions-详细配置)
-- [环境变量完整列表](#环境变量完整列表)
-- [Docker 部署](#docker-部署)
-- [本地运行详细配置](#本地运行详细配置)
-- [定时任务配置](#定时任务配置)
-- [通知渠道详细配置](#通知渠道详细配置)
-- [数据源配置](#数据源配置)
-- [高级功能](#高级功能)
-- [本地 WebUI 管理界面](#本地-webui-管理界面)
-
----
-
-## GitHub Actions 详细配置
-
-### 1. Fork 本仓库
-
-点击右上角 `Fork` 按钮
-
-### 2. 配置 Secrets
-
-进入你 Fork 的仓库 → `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
-
-#### AI 模型配置（二选一）
-
-| Secret 名称 | 说明 | 必填 |
-|------------|------|:----:|
-| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/) 获取免费 Key | ✅* |
-| `OPENAI_API_KEY` | OpenAI 兼容 API Key（支持 DeepSeek、通义千问等） | 可选 |
-| `OPENAI_BASE_URL` | OpenAI 兼容 API 地址（如 `https://api.deepseek.com/v1`） | 可选 |
-| `OPENAI_MODEL` | 模型名称（如 `deepseek-chat`） | 可选 |
-
-> *注：`GEMINI_API_KEY` 和 `OPENAI_API_KEY` 至少配置一个
-
-#### 通知渠道配置（可同时配置多个，全部推送）
-
-| Secret 名称 | 说明 | 必填 |
-|------------|------|:----:|
-| `WECHAT_WEBHOOK_URL` | 企业微信 Webhook URL | 可选 |
-| `FEISHU_WEBHOOK_URL` | 飞书 Webhook URL | 可选 |
-| `TELEGRAM_BOT_TOKEN` | Telegram Bot Token（@BotFather 获取） | 可选 |
-| `TELEGRAM_CHAT_ID` | Telegram Chat ID | 可选 |
-| `EMAIL_SENDER` | 发件人邮箱（如 `xxx@qq.com`） | 可选 |
-| `EMAIL_PASSWORD` | 邮箱授权码（非登录密码） | 可选 |
-| `EMAIL_RECEIVERS` | 收件人邮箱（多个用逗号分隔，留空则发给自己） | 可选 |
-| `CUSTOM_WEBHOOK_URLS` | 自定义 Webhook（支持钉钉等，多个用逗号分隔） | 可选 |
-| `CUSTOM_WEBHOOK_BEARER_TOKEN` | 自定义 Webhook 的 Bearer Token（用于需要认证的 Webhook） | 可选 |
-| `SINGLE_STOCK_NOTIFY` | 单股推送模式：设为 `true` 则每分析完一只股票立即推送 | 可选 |
-
-> *注：至少配置一个渠道，配置多个则同时推送
-
-#### 其他配置
-
-| Secret 名称 | 说明 | 必填 |
-|------------|------|:----:|
-| `STOCK_LIST` | 自选股代码，如 `600519,300750,002594` 或 `00700.HK` | ✅ |
-| `TAVILY_API_KEYS` | [Tavily](https://tavily.com/) 搜索 API（新闻搜索） | 推荐 |
-| `BOCHA_API_KEYS` | [博查搜索](https://open.bocha.cn/) Web Search API（中文搜索优化，支持AI摘要，多个key用逗号分隔） | 可选 |
-| `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/) 备用搜索 | 可选 |
-| `TUSHARE_TOKEN` | [Tushare Pro](https://tushare.pro/) Token | 可选 |
-
-#### ✅ 最小配置示例
-
-如果你想快速开始，最少需要配置以下项：
-
-1. **AI 模型**：`GEMINI_API_KEY`（推荐）或 `OPENAI_API_KEY`
-2. **通知渠道**：至少配置一个，如 `WECHAT_WEBHOOK_URL` 或 `EMAIL_SENDER` + `EMAIL_PASSWORD`
-3. **股票列表**：`STOCK_LIST`（必填）
-4. **搜索 API**：`TAVILY_API_KEYS`（强烈推荐，用于新闻搜索）
-
-> 💡 配置完以上 4 项即可开始使用！
-
-### 3. 启用 Actions
-
-1. 进入你 Fork 的仓库
-2. 点击顶部的 `Actions` 标签
-3. 如果看到提示，点击 `I understand my workflows, go ahead and enable them`
-
-### 4. 手动测试
-
-1. 进入 `Actions` 标签
-2. 左侧选择 `每日股票分析` workflow
-3. 点击右侧的 `Run workflow` 按钮
-4. 选择运行模式
-5. 点击绿色的 `Run workflow` 确认
-
-### 5. 完成！
-
-默认每个工作日 **18:00（北京时间）** 自动执行。
+- [GitHub Actions Detailed Configuration](#github-actions-detailed-configuration)
+- [Complete Environment Variables List](#complete-environment-variables-list)
+- [Docker Deployment](#docker-deployment)
+- [Local Running Detailed Configuration](#local-running-detailed-configuration)
+- [Scheduled Task Configuration](#scheduled-task-configuration)
+- [Notification Channels Detailed Configuration](#notification-channels-detailed-configuration)
+- [Data Sources Configuration](#data-sources-configuration)
+- [Advanced Features](#advanced-features)
+- [Local WebUI Management Interface](#local-webui-management-interface)
 
 ---
 
-## 环境变量完整列表
+## GitHub Actions Detailed Configuration
 
-### AI 模型配置
+### 1. Fork This Repository
 
-| 变量名 | 说明 | 默认值 | 必填 |
+Click the `Fork` button in the top-right corner
+
+### 2. Configure Secrets
+
+Navigate to your forked repository → `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
+
+#### AI Model Configuration (Choose One)
+
+| Secret Name | Description | Required |
+|------------|-------------|:--------:|
+| `GEMINI_API_KEY` | Get free key from [Google AI Studio](https://aistudio.google.com/) | ✅* |
+| `OPENAI_API_KEY` | OpenAI-compatible API key (supports DeepSeek, Qwen, etc.) | Optional |
+| `OPENAI_BASE_URL` | OpenAI-compatible API endpoint (e.g., `https://api.deepseek.com/v1`) | Optional |
+| `OPENAI_MODEL` | Model name (e.g., `deepseek-chat`) | Optional |
+
+> *Note: At least one of `GEMINI_API_KEY` or `OPENAI_API_KEY` must be configured
+
+#### Notification Channels Configuration (Configure Multiple for Simultaneous Push)
+
+| Secret Name | Description | Required |
+|------------|-------------|:--------:|
+| `WECHAT_WEBHOOK_URL` | WeChat Work Webhook URL | Optional |
+| `FEISHU_WEBHOOK_URL` | Feishu Webhook URL | Optional |
+| `TELEGRAM_BOT_TOKEN` | Telegram Bot Token (get from @BotFather) | Optional |
+| `TELEGRAM_CHAT_ID` | Telegram Chat ID | Optional |
+| `EMAIL_SENDER` | Sender email address (e.g., `xxx@qq.com`) | Optional |
+| `EMAIL_PASSWORD` | Email authorization code (not login password) | Optional |
+| `EMAIL_RECEIVERS` | Recipient email addresses (comma-separated, leave blank to send to self) | Optional |
+| `CUSTOM_WEBHOOK_URLS` | Custom Webhook URLs (supports DingTalk, etc., comma-separated) | Optional |
+| `CUSTOM_WEBHOOK_BEARER_TOKEN` | Bearer token for authenticated Webhooks | Optional |
+| `SINGLE_STOCK_NOTIFY` | Single stock push mode: set to `true` to push immediately after each stock analysis | Optional |
+
+> *Note: Configure at least one channel. If multiple are configured, all will receive push notifications
+
+#### Other Configuration
+
+| Secret Name | Description | Required |
+|------------|-------------|:--------:|
+| `STOCK_LIST` | Stock symbols, e.g., `600519,300750,002594` or `00700.HK` | ✅ |
+| `TAVILY_API_KEYS` | [Tavily](https://tavily.com/) search API (for news search) | Recommended |
+| `BOCHA_API_KEYS` | [Bocha Search](https://open.bocha.cn/) Web Search API (Chinese-optimized, supports AI summaries, comma-separated) | Optional |
+| `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/) backup search | Optional |
+| `TUSHARE_TOKEN` | [Tushare Pro](https://tushare.pro/) Token | Optional |
+
+#### ✅ Minimal Configuration Example
+
+If you want to get started quickly, you need to configure at minimum:
+
+1. **AI Model**: `GEMINI_API_KEY` (recommended) or `OPENAI_API_KEY`
+2. **Notification Channel**: Configure at least one, such as `WECHAT_WEBHOOK_URL` or `EMAIL_SENDER` + `EMAIL_PASSWORD`
+3. **Stock List**: `STOCK_LIST` (required)
+4. **Search API**: `TAVILY_API_KEYS` (strongly recommended, for news search)
+
+> 💡 Once you've configured these 4 items, you're ready to go!
+
+### 3. Enable Actions
+
+1. Go to your forked repository
+2. Click the `Actions` tab at the top
+3. If prompted, click `I understand my workflows, go ahead and enable them`
+
+### 4. Manual Test
+
+1. Go to the `Actions` tab
+2. Select `每日股票分析` workflow on the left
+3. Click the `Run workflow` button on the right
+4. Select run mode
+5. Click the green `Run workflow` button to confirm
+
+### 5. Done!
+
+By default, it automatically runs at **18:00 (Beijing Time)** on every weekday.
+
+---
+
+## Complete Environment Variables List
+
+### AI Model Configuration
+
+| Variable Name | Description | Default Value | Required |
 |--------|------|--------|:----:|
 | `GEMINI_API_KEY` | Google Gemini API Key | - | ✅* |
-| `GEMINI_MODEL` | 主模型名称 | `gemini-2.0-flash` | 否 |
-| `GEMINI_MODEL_FALLBACK` | 备选模型 | `gemini-1.5-flash` | 否 |
-| `OPENAI_API_KEY` | OpenAI 兼容 API Key | - | 可选 |
-| `OPENAI_BASE_URL` | OpenAI 兼容 API 地址 | - | 可选 |
-| `OPENAI_MODEL` | OpenAI 模型名称 | `gpt-4o` | 可选 |
+| `GEMINI_MODEL` | Primary model name | `gemini-2.0-flash` | No |
+| `GEMINI_MODEL_FALLBACK` | Fallback model | `gemini-1.5-flash` | No |
+| `OPENAI_API_KEY` | OpenAI-compatible API Key | - | Optional |
+| `OPENAI_BASE_URL` | OpenAI-compatible API endpoint | - | Optional |
+| `OPENAI_MODEL` | OpenAI model name | `gpt-4o` | Optional |
 
-> *注：`GEMINI_API_KEY` 和 `OPENAI_API_KEY` 至少配置一个
+> *Note: At least one of `GEMINI_API_KEY` or `OPENAI_API_KEY` must be configured
 
-### 通知渠道配置
+### Notification Channels Configuration
 
-| 变量名 | 说明 | 必填 |
+| Variable Name | Description | Required |
 |--------|------|:----:|
-| `WECHAT_WEBHOOK_URL` | 企业微信机器人 Webhook URL | 可选 |
-| `FEISHU_WEBHOOK_URL` | 飞书机器人 Webhook URL | 可选 |
-| `TELEGRAM_BOT_TOKEN` | Telegram Bot Token | 可选 |
-| `TELEGRAM_CHAT_ID` | Telegram Chat ID | 可选 |
-| `EMAIL_SENDER` | 发件人邮箱 | 可选 |
-| `EMAIL_PASSWORD` | 邮箱授权码（非登录密码） | 可选 |
-| `EMAIL_RECEIVERS` | 收件人邮箱（逗号分隔，留空发给自己） | 可选 |
-| `CUSTOM_WEBHOOK_URLS` | 自定义 Webhook（逗号分隔） | 可选 |
-| `CUSTOM_WEBHOOK_BEARER_TOKEN` | 自定义 Webhook Bearer Token | 可选 |
-| `PUSHOVER_USER_KEY` | Pushover 用户 Key | 可选 |
-| `PUSHOVER_API_TOKEN` | Pushover API Token | 可选 |
+| `WECHAT_WEBHOOK_URL` | WeChat Work bot Webhook URL | Optional |
+| `FEISHU_WEBHOOK_URL` | Feishu bot Webhook URL | Optional |
+| `TELEGRAM_BOT_TOKEN` | Telegram Bot Token | Optional |
+| `TELEGRAM_CHAT_ID` | Telegram Chat ID | Optional |
+| `EMAIL_SENDER` | Sender email address | Optional |
+| `EMAIL_PASSWORD` | Email authorization code (not login password) | Optional |
+| `EMAIL_RECEIVERS` | Recipient email addresses (comma-separated, leave blank to send to self) | Optional |
+| `CUSTOM_WEBHOOK_URLS` | Custom Webhook URLs (comma-separated) | Optional |
+| `CUSTOM_WEBHOOK_BEARER_TOKEN` | Custom Webhook Bearer Token | Optional |
+| `PUSHOVER_USER_KEY` | Pushover User Key | Optional |
+| `PUSHOVER_API_TOKEN` | Pushover API Token | Optional |
 
-#### 飞书云文档配置（可选，解决消息截断问题）
+#### Feishu Cloud Document Configuration (Optional, Solves Message Truncation)
 
-| 变量名 | 说明 | 必填 |
+| Variable Name | Description | Required |
 |--------|------|:----:|
-| `FEISHU_APP_ID` | 飞书应用 ID | 可选 |
-| `FEISHU_APP_SECRET` | 飞书应用 Secret | 可选 |
-| `FEISHU_FOLDER_TOKEN` | 飞书云盘文件夹 Token | 可选 |
+| `FEISHU_APP_ID` | Feishu App ID | Optional |
+| `FEISHU_APP_SECRET` | Feishu App Secret | Optional |
+| `FEISHU_FOLDER_TOKEN` | Feishu Cloud Drive Folder Token | Optional |
 
-> 飞书云文档配置步骤：
-> 1. 在 [飞书开发者后台](https://open.feishu.cn/app) 创建应用
-> 2. 配置 GitHub Secrets
-> 3. 创建群组并添加应用机器人
-> 4. 在云盘文件夹中添加群组为协作者（可管理权限）
+> Feishu Cloud Document Configuration Steps:
+> 1. Create an app at [Feishu Developer Console](https://open.feishu.cn/app)
+> 2. Configure GitHub Secrets
+> 3. Create a group and add the app bot
+> 4. Add the group as a collaborator (can manage permission) in the cloud drive folder
 
-### 搜索服务配置（第四层舆情过滤）
+### Search Services Configuration (Layer 4 Sentiment Filtering)
 
-| 变量名 | 说明 | 必填 |
+| Variable Name | Description | Required |
 |--------|------|:----:|
-| `TAVILY_API_KEYS` | Tavily 搜索 API Key（推荐） | 推荐 |
-| `BOCHA_API_KEYS` | 博查搜索 API Key（中文优化） | 可选 |
-| `SERPAPI_API_KEYS` | SerpAPI 备用搜索 | 可选 |
+| `TAVILY_API_KEYS` | Tavily Search API Key (recommended) | Recommended |
+| `BOCHA_API_KEYS` | Bocha Search API Key (Chinese-optimized) | Optional |
+| `SERPAPI_API_KEYS` | SerpAPI backup search | Optional |
 
-### 数据源配置
+### Data Sources Configuration
 
-| 变量名 | 说明 | 必填 |
+| Variable Name | Description | Required |
 |--------|------|:----:|
-| `TUSHARE_TOKEN` | Tushare Pro Token | 可选 |
+| `TUSHARE_TOKEN` | Tushare Pro Token | Optional |
 
-### 其他配置
+### Other Configuration
 
-| 变量名 | 说明 | 默认值 |
+| Variable Name | Description | Default Value |
 |--------|------|--------|
-| `STOCK_LIST` | 自选股代码（逗号分隔），支持 A股/港股混合 | - |
-| `MAX_WORKERS` | 并发线程数 | `3` |
-| `MARKET_REVIEW_ENABLED` | 启用大盘复盘 | `true` |
-| `SCHEDULE_ENABLED` | 启用定时任务 | `false` |
-| `SCHEDULE_TIME` | 定时执行时间 | `18:00` |
-| `LOG_DIR` | 日志目录 | `./logs` |
-| `DATA_DAYS` | 获取数据天数 | `60` |
+| `STOCK_LIST` | Stock symbols (comma-separated), supports A-shares/HK stocks mixed | - |
+| `MAX_WORKERS` | Concurrent thread count | `3` |
+| `MARKET_REVIEW_ENABLED` | Enable market review | `true` |
+| `SCHEDULE_ENABLED` | Enable scheduled tasks | `false` |
+| `SCHEDULE_TIME` | Scheduled execution time | `18:00` |
+| `LOG_DIR` | Log directory | `./logs` |
+| `DATA_DAYS` | Number of days to fetch data | `60` |
 
 ---
 
-## Docker 部署
+## Docker Deployment
 
-### 快速启动
+### Quick Start
 
 ```bash
-# 1. 克隆仓库
+# 1. Clone the repository
 git clone https://github.com/MINGCHOW/intelligent-stock-decision.git
 cd intelligent-stock-decision
 
-# 2. 配置环境变量
+# 2. Configure environment variables
 cp .env.example .env
-vim .env  # 填入 API Key 和配置
+vim .env  # Fill in API keys and configuration
 
-# 3. 启动容器
+# 3. Start the container
 docker-compose up -d
 
-# 4. 查看日志
+# 4. View logs
 docker-compose logs -f
 ```
 
-### Docker Compose 配置
+### Docker Compose Configuration
 
-`docker-compose.yml` 已配置好定时任务模式：
+`docker-compose.yml` is already configured for scheduled task mode:
 
 ```yaml
 version: '3.8'
@@ -204,13 +204,13 @@ services:
     env_file:
       - .env
     volumes:
-      - ./data:/app/data      # 数据持久化
-      - ./logs:/app/logs      # 日志持久化
-      - ./reports:/app/reports # 报告持久化
+      - ./data:/app/data      # Data persistence
+      - ./logs:/app/logs      # Log persistence
+      - ./reports:/app/reports # Report persistence
     restart: unless-stopped
 ```
 
-### 手动构建镜像
+### Manual Build Image
 
 ```bash
 docker build -t stock-decision .
@@ -219,51 +219,51 @@ docker run -d --env-file .env -v ./data:/app/data stock-decision
 
 ---
 
-## 本地运行详细配置
+## Local Running Detailed Configuration
 
-### 安装依赖
+### Install Dependencies
 
 ```bash
-# Python 3.10+ 推荐
+# Python 3.10+ recommended
 pip install -r requirements.txt
 
-# 或使用 conda
+# Or use conda
 conda create -n stock python=3.11
 conda activate stock
 pip install -r requirements.txt
 ```
 
-### 命令行参数
+### Command Line Arguments
 
 ```bash
-python main.py                        # 完整分析（个股 + 大盘复盘）
-python main.py --market-review        # 仅大盘复盘
-python main.py --no-market-review     # 仅个股分析
-python main.py --stocks 600519,300750 # 指定股票
-python main.py --dry-run              # 仅获取数据，不 AI 分析
-python main.py --no-notify            # 不发送推送
-python main.py --schedule             # 定时任务模式
-python main.py --debug                # 调试模式（详细日志）
-python main.py --workers 5            # 指定并发数
+python main.py                        # Complete analysis (stocks + market review)
+python main.py --market-review        # Market review only
+python main.py --no-market-review     # Stock analysis only
+python main.py --stocks 600519,300750 # Specify stocks
+python main.py --dry-run              # Fetch data only, no AI analysis
+python main.py --no-notify            # Do not send notifications
+python main.py --schedule             # Scheduled task mode
+python main.py --debug                # Debug mode (verbose logs)
+python main.py --workers 5            # Specify concurrent worker count
 ```
 
 ---
 
-## 定时任务配置
+## Scheduled Task Configuration
 
-### GitHub Actions 定时
+### GitHub Actions Scheduling
 
-编辑 `.github/workflows/daily_analysis.yml`:
+Edit `.github/workflows/daily_analysis.yml`:
 
 ```yaml
 schedule:
-  # UTC 时间，北京时间 = UTC + 8
-  - cron: '0 10 * * 1-5'   # 周一到周五 18:00（北京时间）
+  # UTC time, Beijing Time = UTC + 8
+  - cron: '0 10 * * 1-5'   # Monday to Friday 18:00 (Beijing Time)
 ```
 
-常用时间对照：
+Common time conversion:
 
-| 北京时间 | UTC cron 表达式 |
+| Beijing Time | UTC cron expression |
 |---------|----------------|
 | 09:30 | `'30 1 * * 1-5'` |
 | 12:00 | `'0 4 * * 1-5'` |
@@ -271,205 +271,205 @@ schedule:
 | 18:00 | `'0 10 * * 1-5'` |
 | 21:00 | `'0 13 * * 1-5'` |
 
-### 本地定时任务
+### Local Scheduled Tasks
 
 ```bash
-# 启动定时模式（默认 18:00 执行）
+# Start scheduled mode (executes at 18:00 by default)
 python main.py --schedule
 
-# 或使用 crontab
+# Or use crontab
 crontab -e
-# 添加：0 18 * * 1-5 cd /path/to/project && python main.py
+# Add: 0 18 * * 1-5 cd /path/to/project && python main.py
 ```
 
 ---
 
-## 通知渠道详细配置
+## Notification Channels Detailed Configuration
 
-### 企业微信
+### WeChat Work
 
-1. 在企业微信群聊中添加"群机器人"
-2. 复制 Webhook URL
-3. 设置 `WECHAT_WEBHOOK_URL`
+1. Add "Group Bot" to your WeChat Work group
+2. Copy the Webhook URL
+3. Set `WECHAT_WEBHOOK_URL`
 
-### 飞书
+### Feishu
 
-1. 在飞书群聊中添加"自定义机器人"
-2. 复制 Webhook URL
-3. 设置 `FEISHU_WEBHOOK_URL`
+1. Add "Custom Bot" to your Feishu group
+2. Copy the Webhook URL
+3. Set `FEISHU_WEBHOOK_URL`
 
 ### Telegram
 
-1. 与 @BotFather 对话创建 Bot
-2. 获取 Bot Token
-3. 获取 Chat ID（可通过 @userinfobot）
-4. 设置 `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID`
+1. Chat with @BotFather to create a Bot
+2. Get Bot Token
+3. Get Chat ID (via @userinfobot)
+4. Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`
 
-### 邮件
+### Email
 
-1. 开启邮箱的 SMTP 服务
-2. 获取授权码（非登录密码）
-3. 设置 `EMAIL_SENDER`、`EMAIL_PASSWORD`、`EMAIL_RECEIVERS`
+1. Enable SMTP service for your email
+2. Get authorization code (not login password)
+3. Set `EMAIL_SENDER`, `EMAIL_PASSWORD`, `EMAIL_RECEIVERS`
 
-支持的邮箱：
-- QQ 邮箱：smtp.qq.com:465
-- 163 邮箱：smtp.163.com:465
-- Gmail：smtp.gmail.com:587
+Supported email providers:
+- QQ Mail: smtp.qq.com:465
+- 163 Mail: smtp.163.com:465
+- Gmail: smtp.gmail.com:587
 
-### 自定义 Webhook
+### Custom Webhook
 
-支持任意 POST JSON 的 Webhook，包括：
-- 钉钉机器人
+Supports any POST JSON Webhook, including:
+- DingTalk Bot
 - Discord Webhook
 - Slack Webhook
-- Bark（iOS 推送）
-- 自建服务
+- Bark (iOS push)
+- Self-hosted services
 
-设置 `CUSTOM_WEBHOOK_URLS`，多个用逗号分隔。
+Set `CUSTOM_WEBHOOK_URLS`, multiple URLs separated by commas.
 
-### Pushover（iOS/Android 推送）
+### Pushover (iOS/Android Push)
 
-[Pushover](https://pushover.net/) 是一个跨平台的推送服务，支持 iOS 和 Android。
+[Pushover](https://pushover.net/) is a cross-platform push notification service supporting iOS and Android.
 
-1. 注册 Pushover 账号并下载 App
-2. 在 [Pushover Dashboard](https://pushover.net/) 获取 User Key
-3. 创建 Application 获取 API Token
-4. 配置环境变量：
+1. Register for a Pushover account and download the app
+2. Get User Key from [Pushover Dashboard](https://pushover.net/)
+3. Create an Application to get API Token
+4. Configure environment variables:
 
 ```bash
 PUSHOVER_USER_KEY=your_user_key
 PUSHOVER_API_TOKEN=your_api_token
 ```
 
-特点：
-- 支持 iOS/Android 双平台
-- 支持通知优先级和声音设置
-- 免费额度足够个人使用（每月 10,000 条）
-- 消息可保留 7 天
+Features:
+- Supports iOS/Android platforms
+- Supports notification priority and sound settings
+- Free tier sufficient for personal use (10,000 messages per month)
+- Messages retained for 7 days
 
 ---
 
-## 数据源配置
+## Data Sources Configuration
 
-系统采用 5 个数据源的自动切换策略：
+The system uses an automatic failover strategy across 5 data sources:
 
-### Efinance（优先级最高）
-- 免费，无需配置
-- 数据来源：东方财富官方接口
-- 稳定性和速度最佳
+### Efinance (Highest Priority)
+- Free, no configuration required
+- Data source: East Money official API
+- Best stability and speed
 
 ### AkShare
-- 免费，无需配置
-- 数据来源：东方财富爬虫
-- 作为 Efinance 的备用
+- Free, no configuration required
+- Data source: East Money crawler
+- Acts as backup for Efinance
 
 ### Tushare Pro
-- 需要注册获取 Token
-- 更稳定，数据更全
-- 设置 `TUSHARE_TOKEN`
+- Requires registration to get Token
+- More stable, more comprehensive data
+- Set `TUSHARE_TOKEN`
 
 ### Baostock
-- 免费，无需配置
-- 作为备用数据源
+- Free, no configuration required
+- Acts as backup data source
 
 ### YFinance
-- 免费，无需配置
-- 支持美股/港股数据
+- Free, no configuration required
+- Supports US/HK stock data
 
 ---
 
-## 高级功能
+## Advanced Features
 
-### 港股支持
+### Hong Kong Stock Support
 
-支持 A股/港股混合分析：
+Supports A-shares/HK stocks mixed analysis:
 
 ```bash
-# A股：6位数字代码
+# A-shares: 6-digit codes
 STOCK_LIST=600519,000001,300750
 
-# 港股：xxx.HK 格式
+# HK stocks: xxx.HK format
 STOCK_LIST=00700.HK,00941.HK,09988.HK
 
-# 混合配置
+# Mixed configuration
 STOCK_LIST=600519,00700.HK,000001
 ```
 
-### 四层决策系统
+### Four-Layer Decision System
 
-**第一层：趋势过滤（硬条件）**
-- MA5 > MA10 > MA20 多头排列
-- 不满足不参与
+**Layer 1: Trend Filter (Hard Condition)**
+- MA5 > MA10 > MA20 bullish alignment
+- Do not participate if not met
 
-**第二层：位置过滤（硬条件）**
-- A股：乖离率 < 5%
-- 港股：乖离率 < 6%
-- 严控追高风险
+**Layer 2: Position Filter (Hard Condition)**
+- A-shares: Bias rate < 5%
+- HK stocks: Bias rate < 6%
+- Strictly control chasing highs risk
 
-**第三层：辅助确认（评分系统）**
-- 基础分：70分
-- MACD金叉：+10分
-- RSI健康(40-60)：+10分，超卖(<40)：+15分
-- ATR稳定：+5分
-- 总分 ≥ 80 触发买入信号
+**Layer 3: Technical Confirmation (Scoring System)**
+- Base score: 70 points
+- MACD golden cross: +10 points
+- RSI healthy (40-60): +10 points, oversold (<40): +15 points
+- ATR stable: +5 points
+- Total score ≥ 80 triggers buy signal
 
-**第四层：舆情过滤（硬否决+加分）**
-- 严重利空（财务造假、立案调查、退市风险）→ 立即观望
-- 明确利好（回购、业绩超预期、重大合同）→ +5分
-- 中性舆情：保持技术面评分
+**Layer 4: Sentiment Filter (Hard Veto + Bonus)**
+- Severe negative news (financial fraud, regulatory investigation, delisting risk) → Immediate观望
+- Clear positive news (buyback, earnings beat, major contracts) → +5 points
+- Neutral sentiment: Maintain technical score
 
-### 调试模式
+### Debug Mode
 
 ```bash
 python main.py --debug
 ```
 
-日志文件位置：
-- 常规日志：`logs/stock_analysis_YYYYMMDD.log`
-- 调试日志：`logs/stock_analysis_debug_YYYYMMDD.log`
+Log file locations:
+- Regular logs: `logs/stock_analysis_YYYYMMDD.log`
+- Debug logs: `logs/stock_analysis_debug_YYYYMMDD.log`
 
 ---
 
-## 本地 WebUI 管理界面
+## Local WebUI Management Interface
 
-仅用于本地环境，方便查看和修改 `.env` 中的自选股列表。
+For local environment only, convenient for viewing and modifying stock list from `.env`.
 
-#### 1. 启动方式
+#### 1. Startup Method
 
-**独立启动**：
+**Standalone:**
 ```bash
 python webui.py
 ```
 
-**自定义配置**：
+**Custom Configuration:**
 ```bash
 WEBUI_HOST=0.0.0.0 WEBUI_PORT=8888 python webui.py
 ```
 
-#### 2. 访问与使用
-- 浏览器访问：`http://127.0.0.1:8000` (或您配置的端口)
-- 支持直接编辑股票代码，保存后立即生效（下次运行分析时生效）
-- **注意**：此功能仅用于本地环境，不要暴露到公网
+#### 2. Access and Usage
+- Browser access: `http://127.0.0.1:8000` (or your configured port)
+- Supports direct editing of stock codes, takes effect immediately after saving (effective on next analysis run)
+- **Note**: This feature is for local environment only, do not expose to public internet
 
 ---
 
-## 常见问题
+## FAQ
 
-### Q: 推送消息被截断？
-A: 企业微信/飞书有消息长度限制，系统已自动分段发送。如需完整内容，可配置飞书云文档功能。
+### Q: Push notifications truncated?
+A: WeChat Work/Feishu have message length limits. The system automatically sends in segments. For complete content, configure Feishu Cloud Document feature.
 
-### Q: 数据获取失败？
-A: 系统已配置5个数据源的自动切换，一般能保证数据获取。如全部失败，请检查网络连接。
+### Q: Data fetch failed?
+A: The system has configured automatic failover across 5 data sources, generally guaranteeing data fetch. If all fail, check network connection.
 
-### Q: 如何添加自选股？
-A: 修改 `STOCK_LIST` 环境变量，多个代码用逗号分隔。支持 A股（6位代码）和港股（xxx.HK）混合配置。
+### Q: How to add stocks to watchlist?
+A: Modify the `STOCK_LIST` environment variable, multiple codes separated by commas. Supports A-shares (6-digit codes) and HK stocks (xxx.HK) mixed configuration.
 
-### Q: GitHub Actions 没有执行？
-A: 检查是否启用了 Actions，以及 cron 表达式是否正确（注意是 UTC 时间）。
+### Q: GitHub Actions not executing?
+A: Check if Actions is enabled and if cron expression is correct (note it's UTC time).
 
-### Q: 如何查看历史分析结果？
-A: GitHub Actions 运行记录会保存30天，可在 Actions 页面下载 Artifacts 查看。
+### Q: How to view historical analysis results?
+A: GitHub Actions run records are saved for 30 days. You can download Artifacts from the Actions page.
 
 ---
 
-更多问题请 [提交 Issue](https://github.com/MINGCHOW/intelligent-stock-decision/issues)
+For more questions, please [submit an Issue](https://github.com/MINGCHOW/intelligent-stock-decision/issues)
