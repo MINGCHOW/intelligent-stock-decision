@@ -19,7 +19,7 @@ class Config:
     # AI 配置
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.0-flash-exp"
-    gemini_model_fallback: str = "gemini-1.5-flash"
+    gemini_model_fallback: str = "gemini-1.5-flash-002"
     gemini_max_retries: int = 5
     gemini_retry_delay: float = 5.0
     gemini_request_delay: float = 2.0
