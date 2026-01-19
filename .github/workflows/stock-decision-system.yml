@@ -1,4 +1,4 @@
-name: 每日股票分析
+name: AI-Powered Stock Decision System
 
 on:
   # 定时触发 - 每天北京时间 18:00 (UTC 10:00)
