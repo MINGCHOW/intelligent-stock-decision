@@ -1,405 +1,299 @@
 # Intelligent Stock Decision System
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![GitHub stars](https://img.shields.io/github/stars/MINGCHOW/intelligent-stock-decision?style=social)](https://github.com/MINGCHOW/intelligent-stock-decision/stargazers)
+[![CI](https://github.com/MINGCHOW/intelligent-stock-decision/actions/workflows/ci.yml/badge.svg)](https://github.com/MINGCHOW/intelligent-stock-decision/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Actions](https://img.shields.io/badge/deployment-GitHub%20Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-Ready-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
 
-An intelligent A-share and Hong Kong stock analysis system based on a four-layer decision framework, combining technical analysis with sentiment filtering for quantitative trading decision support.
+> An AI-powered A-share and Hong Kong stock analysis system featuring a four-layer decision framework, multi-source data integration, and automated daily push notifications.
 
-## Core Features
+## Features
 
-### Four-Layer Decision System (Pro v2.1)
+### Core Capabilities
+
+- **Four-Layer Decision System** - Systematic filtering from trend to sentiment for precise entry/exit signals
+- **Market-Adaptive Strategy** - Different parameters for A-shares and Hong Kong stocks
+- **AI-Powered Analysis** - Leverages LLMs for sentiment analysis and decision synthesis
+- **Multi-Source Data** - 5 data providers with automatic failover
+- **Intelligent Notifications** - Decision dashboard with actionable buy/sell signals
+- **Zero-Cost Deployment** - Run on GitHub Actions without servers
+
+### Four-Layer Decision Framework
 
 **Layer 1: Trend Filter (Hard Condition)**
-- MA5 > MA10 > MA20 bullish alignment
-- No participation in downtrends if not met
+- Requirement: MA5 > MA10 > MA20 bullish alignment
+- Purpose: Avoid counter-trend trading
 
 **Layer 2: Position Filter (Hard Condition)**
 - A-shares: Bias rate < 5%
 - Hong Kong stocks: Bias rate < 6%
-- Strictly control chasing high prices
+- Purpose: Prevent chasing highs
 
-**Layer 3: Auxiliary Confirmation (Scoring System)**
+**Layer 3: Technical Confirmation (Scoring System)**
 - Base score: 70 points
 - MACD golden cross: +10 points
 - RSI healthy (40-60): +10 points, oversold (<40): +15 points
 - ATR stable: +5 points
-- Total score ≥ 80 triggers buy signal
+- Buy threshold: ≥ 80 points
 
-**Layer 4: Sentiment Filter (Hard Veto + Bonus)**
-- **Veto power**: Severe negative news (financial fraud, investigation, delisting risk) → immediate wait
-- **Bonus mechanism**: Clear positive news (share repurchase, earnings beat, major contracts) → +5 points
-- **Neutral sentiment**: Maintain technical score
+**Layer 4: Sentiment Filter (Veto + Bonus)**
+- Veto: Severe negative news (fraud, regulatory issues)
+- Bonus: Positive catalysts (buybacks, earnings beats, contracts)
+- Neutral: Maintain technical score
 
-### Technical Indicators (Pure Pandas Implementation)
+### Technical Indicators
 
-- **MACD (12, 26, 9)**: Trend confirmation
-- **RSI (14)**: Overbought/oversold detection
-- **ATR (14)**: Volatility assessment
+All indicators implemented in pure pandas (no TA-Lib dependency):
 
-### Market-Adaptive Strategy
+- **MACD (12, 26, 9)** - Trend momentum
+- **RSI (14)** - Overbought/oversold levels
+- **ATR (14)** - Volatility measurement
+- **Moving Averages** - MA5, MA10, MA20, MA60
+- **Bias Rate** - Deviation from moving averages
 
-- A-shares: Bias rate 5%, ATR < 3%
-- Hong Kong stocks: Bias rate 6%, ATR < 4%
-- Auto-detect market type (6-digit code → A-share, xxx.HK → Hong Kong)
+### Data Sources
 
-### Data Sources and AI Models
+**Market Data (5 providers, auto failover)**
+1. Efinance (primary, free)
+2. AkShare (backup)
+3. Tushare Pro (requires token)
+4. Baostock (backup)
+5. YFinance (Hong Kong stocks)
 
-**Data Sources (5 types with auto failover)**
-- Efinance (primary, free)
-- AkShare (backup)
-- Tushare Pro (registration required, stable)
-- Baostock (backup)
-- YFinance (Hong Kong stocks)
-
-**Sentiment Search (Layer 4 filtering)**
+**News Search (3 engines, auto rotation)**
 - Tavily API (recommended)
 - SerpAPI (backup)
 - Bocha API (backup)
 
-**AI Analysis Models**
-- Primary: Google Gemini (generous free tier)
-- Backup: OpenAI-compatible API (DeepSeek, Qwen, etc.)
+**AI Models (dual support)**
+- Primary: Google Gemini (free tier available)
+- Backup: OpenAI-compatible APIs (DeepSeek, Qwen, etc.)
 
 ### Notification Channels
 
 - WeChat Work Webhook
 - Feishu Webhook (with cloud document storage)
 - Telegram Bot
-- Custom Webhook (DingTalk, Discord, Slack, Bark, etc.)
-- Pushover (iOS/Android push)
+- Email (SMTP with auto-detection)
+- Custom Webhook (DingTalk, Discord, Slack, Bark)
+- Pushover (iOS/Android push notifications)
 
 ## Quick Start
 
 ### GitHub Actions Deployment (Recommended)
 
-**No server required, runs automatically every day**
+**Zero server costs, automated daily execution**
 
-#### 1. Fork This Repository
+#### 1. Fork Repository
 
-Click the Fork button in the top right
+Click the `Fork` button in the top-right corner
 
 #### 2. Configure GitHub Secrets
 
-Go to repository → Settings → Secrets and variables → Actions → New repository secret
+Navigate to: `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
 
-**Required Configuration**
+**AI Model Configuration (choose one)**
 
-| Secret Name | Description | How to Get |
-|------------|-------------|------------|
-| `GEMINI_API_KEY` | Google AI API Key | Get free from [Google AI Studio](https://aistudio.google.com/) |
-| `STOCK_LIST` | Stock symbols (comma-separated) | Example: `600519,00700.HK,300750` |
-| `TAVILY_API_KEYS` | Tavily Search API | Register at [Tavily](https://tavily.com/) |
+| Secret Name | Description | Required |
+|------------|-------------|:--------:|
+| `GEMINI_API_KEY` | Get free key from [Google AI Studio](https://aistudio.google.com/) | ✅* |
+| `OPENAI_API_KEY` | OpenAI-compatible API key (DeepSeek, Qwen, etc.) | Optional |
+| `OPENAI_BASE_URL` | API endpoint (e.g., `https://api.deepseek.com/v1`) | Optional |
+| `OPENAI_MODEL` | Model name (e.g., `deepseek-chat`) | Optional |
 
-**Notification Channels (configure at least one)**
+*At least one AI model must be configured
 
-| Secret Name | Description |
-|------------|-------------|
-| `WECHAT_WEBHOOK_URL` | WeChat Work Webhook URL |
-| `FEISHU_WEBHOOK_URL` | Feishu Webhook URL |
-| `TELEGRAM_BOT_TOKEN` | Telegram Bot Token |
-| `TELEGRAM_CHAT_ID` | Telegram Chat ID |
-| `CUSTOM_WEBHOOK_URLS` | Custom Webhook URLs (comma-separated) |
+**Notification Channels (configure one or more)**
 
-**Optional Configuration**
+| Secret Name | Description | Required |
+|------------|-------------|:--------:|
+| `WECHAT_WEBHOOK_URL` | WeChat Work webhook URL | Optional |
+| `FEISHU_WEBHOOK_URL` | Feishu webhook URL | Optional |
+| `TELEGRAM_BOT_TOKEN` | Telegram bot token from @BotFather | Optional |
+| `TELEGRAM_CHAT_ID` | Telegram chat ID | Optional |
+| `EMAIL_SENDER` | Sender email address | Optional |
+| `EMAIL_PASSWORD` | Email authorization code | Optional |
+| `EMAIL_RECEIVERS` | Recipient emails (comma-separated) | Optional |
+| `CUSTOM_WEBHOOK_URLS` | Custom webhook URLs (comma-separated) | Optional |
+| `CUSTOM_WEBHOOK_BEARER_TOKEN` | Bearer token for authenticated webhooks | Optional |
+| `SINGLE_STOCK_NOTIFY` | Set to `true` for immediate single-stock push | Optional |
 
-| Secret Name | Description |
-|------------|-------------|
-| `OPENAI_API_KEY` | OpenAI-compatible API Key (DeepSeek, Qwen, etc.) |
-| `OPENAI_BASE_URL` | OpenAI-compatible API endpoint |
-| `OPENAI_MODEL` | Model name (e.g., `deepseek-chat`) |
-| `BOCHA_API_KEYS` | Bocha Search API (backup) |
-| `SERPAPI_API_KEYS` | SerpAPI backup search |
-| `TUSHARE_TOKEN` | Tushare Pro Token |
-| `FEISHU_APP_ID` | Feishu Cloud Document App ID |
-| `FEISHU_APP_SECRET` | Feishu Cloud Document App Secret |
-| `FEISHU_FOLDER_TOKEN` | Feishu Cloud Document Folder Token |
-| `PUSHOVER_USER_KEY` | Pushover User Key |
-| `PUSHOVER_API_TOKEN` | Pushover API Token |
-| `SINGLE_STOCK_NOTIFY` | Single stock notification mode (set to `true`) |
+> Configure at least one notification channel
+>
+> For additional configurations (Pushover, Feishu cloud docs), see [Full Configuration Guide](docs/full-guide.md)
+
+**Stock List Configuration**
+
+| Secret Name | Description | Required |
+|------------|-------------|:--------:|
+| `STOCK_LIST` | Stock symbols (comma-separated), e.g., `600519,00700.HK,300750` | ✅ |
+
+**Search APIs (recommended)**
+
+| Secret Name | Description | Required |
+|------------|-------------|:--------:|
+| `TAVILY_API_KEYS` | Register at [Tavily](https://tavily.com/) | Recommended |
+| `BOCHA_API_KEYS` | Bocha search API (comma-separated) | Optional |
+| `SERPAPI_API_KEYS` | SerpAPI backup search | Optional |
+| `TUSHARE_TOKEN` | Tushare Pro token | Optional |
 
 #### 3. Enable GitHub Actions
 
-Go to Actions tab → Click to enable workflows
+Go to `Actions` tab → Click `I understand my workflows, go ahead and enable them`
 
 #### 4. Manual Test
 
-Actions → Daily Stock Analysis → Run workflow → Run workflow
+Navigate to: `Actions` → `Daily Stock Analysis` → `Run workflow` → Select mode → `Run workflow`
 
-#### 5. Scheduled Execution
+#### 5. Done!
 
-Automatically runs at 18:00 Beijing time every weekday by default
+By default, the system runs automatically at **18:00 Beijing time** on weekdays.
 
-### Local Run
+### Local Deployment
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
+> For detailed local deployment and Docker setup, see [Full Configuration Guide](docs/full-guide.md)
 
-# Configure environment variables
-cp .env.example .env
-# Edit .env file with necessary configurations
+## Output Examples
 
-# Run analysis
-python main.py
-
-# Market review only
-python main.py --market-review
-
-# Individual stock analysis only
-python main.py --no-market-review
-
-# Specify stocks
-python main.py --stocks 600519,00700.HK
-
-# Dry run (fetch data only, no AI analysis)
-python main.py --dry-run
-
-# No notifications
-python main.py --no-notify
-
-# Scheduled task mode
-python main.py --schedule
-
-# Specify concurrency
-python main.py --workers 5
-
-# Debug mode
-python main.py --debug
-```
-
-## Decision Output Examples
-
-### Individual Stock Analysis
+### Decision Dashboard
 
 ```
-📊 Kweichow Moutai(600519) - 2026-01-19
+Decision Dashboard - 2026-01-19
+Total: 3 stocks | Buy: 1 | Hold: 2 | Sell: 0
 
-【Four-Layer Decision Result】
-Layer 1 (Trend): ✅ MA5(1785) > MA10(1772) > MA20(1765), bullish alignment
-Layer 2 (Position): ✅ Bias rate 1.2%, below 5% warning line
-Layer 3 (Indicators): ✅ MACD golden cross + RSI healthy(52) + ATR stable(2.1%), total score 85
-Layer 4 (Sentiment): ✅ Earnings beat, share repurchase, sentiment score +5
+BUY | Kweichow Moutai (600519)
+Pullback to MA5 support, bias 1.2% at optimal entry
+Entry: Buy at 1800 | Stop Loss: 1750 | Target: 1900
+✅ Bullish alignment ✅ Safe bias ✅ Volume confirmation
 
-【Final Signal】🟢 Buy
+HOLD | CATL (300750)
+Bias 7.8% exceeds 5% warning line, strictly avoid chasing
+⚠️ Wait for pullback near MA5
 
-【Trading Recommendations】
-Entry Price: Buy 1780 | Stop Loss 1750 | Target 1900
-Current Price: 1782.50 (-0.14%)
-
-【Risk Warnings】
-⚠️ Market correction risk
-⚠️ Northbound capital outflow
+---
+Generated at: 18:00
 ```
 
 ### Market Review
 
 ```
-🎯 2026-01-19 Market Review
+Market Review - 2026-01-19
 
-📊 Major Indices
-Shanghai Composite: 3250.12 (+0.85%)
-Shenzhen Component: 10521.36 (+1.02%)
-ChiNext Index: 2156.78 (+1.35%)
+Major Indices
+- Shanghai Composite: 3250.12 (+0.85%)
+- Shenzhen Component: 10521.36 (+1.02%)
+- ChiNext Index: 2156.78 (+1.35%)
 
-📈 Market Overview
+Market Overview
 Advancing: 3920 | Declining: 1349 | Limit Up: 155 | Limit Down: 3
 
-🔥 Sector Performance
+Sector Performance
 Leaders: Internet Services, Culture Media, Minor Metals
 Laggards: Insurance, Aviation Airport, Photovoltaic Equipment
-
-💰 Capital Flows
-Northbound: +8.56B RMB
-Southbound: +3.21B RMB
 ```
+
+## Configuration
+
+> For complete environment variables and scheduling options, see [Full Configuration Guide](docs/full-guide.md)
+
+## Web UI (Optional)
+
+When running locally, enable the Web UI for convenient stock list management:
+
+- Launch command: `python main.py --webui`
+- Access URL: `http://127.0.0.1:8000`
+- See [Configuration Guide - WebUI](docs/full-guide.md#local-webui-management) for details
 
 ## Project Structure
 
 ```
 intelligent-stock-decision/
-├── main.py                  # Main entry point
-├── analyzer.py              # AI analyzer (four-layer decision system)
-├── stock_analyzer.py        # Technical analysis engine (four-layer + sentiment)
-├── market_analyzer.py       # Market review analysis
-├── search_service.py        # Sentiment search service
-├── notification.py          # Notification core
-├── notification_pro.py      # Feishu document optimization
-├── feishu_doc.py            # Feishu cloud document storage
-├── scheduler.py             # Scheduled tasks
-├── storage.py               # Data storage (SQLite)
-├── config.py                # Configuration management
-├── data_provider/           # Data source adapters
-│   ├── efinance_fetcher.py  # Efinance data source
-│   ├── akshare_fetcher.py   # AkShare data source
-│   ├── tushare_fetcher.py   # Tushare Pro data source
-│   ├── baostock_fetcher.py  # Baostock data source
-│   └── yfinance_fetcher.py  # YFinance data source (Hong Kong stocks)
-├── .github/workflows/       # GitHub Actions configurations
-│   ├── daily_analysis.yml   # Daily analysis workflow
-│   ├── ci.yml               # CI checks
-│   ├── pr-review.yml        # PR review
-│   └── stale.yml            # Stale issue management
-├── requirements.txt         # Python dependencies
-└── .env.example             # Environment variable template
+├── main.py                 # Entry point
+├── stock_analyzer.py       # Four-layer decision system
+├── analyzer.py             # AI analysis layer
+├── market_analyzer.py      # Market review
+├── search_service.py       # News search service
+├── notification.py         # Multi-channel notifications
+├── scheduler.py            # Task scheduler
+├── storage.py              # Data persistence (SQLite)
+├── config.py               # Configuration management
+├── data_provider/          # Data source adapters
+│   ├── base.py             # Abstract base class
+│   ├── efinance_fetcher.py # Priority 0: Efinance
+│   ├── akshare_fetcher.py  # Priority 1: AkShare
+│   ├── tushare_fetcher.py  # Priority 2: Tushare Pro
+│   ├── baostock_fetcher.py # Priority 3: Baostock
+│   └── yfinance_fetcher.py # Priority 4: YFinance
+├── .github/workflows/      # CI/CD workflows
+├── Dockerfile              # Docker image
+├── docker-compose.yml      # Docker orchestration
+└── requirements.txt        # Python dependencies
 ```
-
-## Decision System Details
-
-### Layer 1: Trend Filter
-
-**Purpose**: Avoid counter-trend trading, only participate in bullish alignments
-
-**Condition**:
-```
-MA5 > MA10 > MA20
-```
-
-**Pass Standard**: Strict bullish alignment of three moving averages
-
-### Layer 2: Position Filter
-
-**Purpose**: Control chasing risk, wait for pullback entry
-
-**Condition**:
-```
-Bias Rate = (Current Price - MA20) / MA20 * 100%
-A-shares: Bias Rate < 5%
-Hong Kong stocks: Bias Rate < 6%
-```
-
-**Pass Standard**: Price not excessively deviated from 20-day moving average
-
-### Layer 3: Auxiliary Confirmation
-
-**Purpose**: Technical indicator resonance, improve win rate
-
-**Scoring Standard**:
-```
-Base Score: 70 points
-MACD Golden Cross (DIF > DEA): +10 points
-RSI Healthy (40-60): +10 points
-RSI Oversold (<40): +15 points
-ATR Stable (A-shares <3%, HK <4%): +5 points
-Total ≥ 80 points: Trigger buy signal
-```
-
-### Layer 4: Sentiment Filter
-
-**Purpose**: Avoid black swan events, capture positive opportunities
-
-**Veto Keywords** (Severe level):
-- Financial fraud, revenue inflation, accounting irregularities
-- Investigation, regulatory probe, CSRC investigation
-- Delisting risk, trading suspension, termination
-- Major litigation, huge penalties, debt default
-- Controlling person missing, executives investigated
-
-**Bonus Keywords** (2+ strong positive):
-- Share repurchase, buyback plan, earnings beat
-- Major contracts, project wins, product approval
-- Institutional research, foreign buying, northbound accumulation
-
-## Configuration
-
-### Environment Variables
-
-Refer to `.env.example` file for complete configuration details.
-
-### Key Configuration Items
-
-```bash
-# AI Model Configuration (choose one)
-GEMINI_API_KEY=your_gemini_api_key_here
-# OPENAI_API_KEY=your_openai_api_key_here
-# OPENAI_BASE_URL=https://api.deepseek.com/v1
-# OPENAI_MODEL=deepseek-chat
-
-# Watchlist Configuration (required)
-STOCK_LIST=600519,00700.HK,300750
-
-# Search Services (Layer 4 sentiment filtering, configure at least one)
-TAVILY_API_KEYS=your_tavily_api_key_here
-# BOCHA_API_KEYS=key1,key2,key3
-# SERPAPI_API_KEYS=your_serpapi_api_key_here
-
-# Notification Channels (configure at least one)
-WECHAT_WEBHOOK_URL=https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx
-# FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxx
-# TELEGRAM_BOT_TOKEN=your_bot_token
-# TELEGRAM_CHAT_ID=your_chat_id
-# CUSTOM_WEBHOOK_URLS=https://oapi.dingtalk.com/robot/send?access_token=xxx
-
-# Concurrency Configuration
-MAX_CONCURRENT=3
-DATA_DAYS=60
-```
-
-## Technical Architecture
-
-### Data Flow
-
-```
-Data Fetching (5 data sources with auto failover)
-    ↓
-Sentiment Search (Tavily/SerpAPI/Bocha)
-    ↓
-Layer 1: Trend Filter (MA5 > MA10 > MA20)
-    ↓
-Layer 2: Position Filter (Bias Rate < Threshold)
-    ↓
-Layer 3: Auxiliary Confirmation (MACD+RSI+ATR scoring)
-    ↓
-Layer 4: Sentiment Filter (Severe negative news veto)
-    ↓
-Final Signal + AI Analysis
-    ↓
-Multi-Channel Notifications
-```
-
-### Error Handling
-
-- Automatic data source failover
-- AI model automatic downgrade (Gemini → OpenAI)
-- Search engine automatic rotation
-- Complete logging and error tracking
 
 ## Roadmap
 
-### Completed Features
+> Features will be implemented progressively. Feel free to [submit issues](https://github.com/MINGCHOW/intelligent-stock-decision/issues) for suggestions!
 
+### Notification Channels
+- [x] WeChat Work Webhook
+- [x] Feishu Webhook
+- [x] Telegram Bot
+- [x] Email Notifications (SMTP)
+- [x] Custom Webhook (DingTalk, Discord, Slack, Bark)
+- [x] Pushover (iOS/Android)
+
+### AI Model Support
+- [x] Google Gemini (primary, free tier)
+- [x] OpenAI-compatible APIs (GPT-4, DeepSeek, Qwen, Claude, etc.)
+
+### Data Sources
+- [x] Efinance (free)
+- [x] AkShare
+- [x] Tushare Pro
+- [x] Baostock
+- [x] YFinance
+
+### Feature Enhancements
 - [x] Four-layer decision system
-- [x] Sentiment filtering layer (veto power + bonus mechanism)
-- [x] MACD/RSI/ATR technical indicators (pure pandas implementation)
-- [x] Market-adaptive strategy (A-share vs Hong Kong)
-- [x] Multi-data source support (5 types with auto failover)
-- [x] Multi-search engine support (3 types)
-- [x] AI analysis (Gemini + OpenAI compatible)
-- [x] Multi-channel notifications (5 types)
-- [x] Feishu cloud document storage
-- [x] GitHub Actions deployment
 - [x] Market review
-
-### Planned Features
-
-- [ ] Historical backtesting and strategy optimization
+- [x] Scheduled push notifications
+- [x] GitHub Actions deployment
+- [x] Hong Kong stock support
+- [x] Web management interface (basic)
+- [ ] Historical backtesting
 - [ ] US stock support
-- [ ] More technical indicators (KDJ, BOLL, etc.)
-- [ ] Custom strategy templates
-- [ ] Web management interface
+
+## Contributing
+
+Issues and Pull Requests are welcome!
+
+See [Contributing Guide](CONTRIBUTING.md) for details.
+
+## License
+
+[MIT License](LICENSE) © 2026 MINGCHOW
+
+If you use this project or build upon it, please credit the source and include a link to this repository in your README or documentation. This helps support project maintenance and community growth.
+
+## Contact
+
+- GitHub Issues: [Submit Issue](https://github.com/MINGCHOW/intelligent-stock-decision/issues)
+
+## Star History
+
+<a href="https://star-history.com/#MINGCHOW/intelligent-stock-decision&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=MINGCHOW/intelligent-stock-decision&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=MINGCHOW/intelligent-stock-decision&type=Date&theme=light" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=MINGCHOW/intelligent-stock-decision&type=Date" />
+ </picture>
+</a>
 
 ## Disclaimer
 
 This project is for learning and research purposes only and does not constitute any investment advice. Stock market investing carries risks; invest cautiously. The author is not responsible for any losses resulting from the use of this project.
 
-## License
+---
 
-MIT License
-
-## Contributing
-
-Issues and Pull Requests are welcome.
-
-## Support
-
-For questions or suggestions, please submit a GitHub Issue.
+**If you find this project helpful, please give it a ⭐ Star!**

@@ -1,0 +1,74 @@
+# ===================================
+# Docker 构建忽略文件
+# ===================================
+# 这些文件不会被打包进 Docker 镜像
+# 可以加快构建速度并减小镜像体积
+
+# 忽略 Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 忽略虚拟环境
+venv/
+.venv/
+env/
+.ENV
+
+# 忽略环境变量（使用 docker-compose 传入）
+.env
+.env.local
+
+# 忽略 IDE 配置
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 忽略 Git
+.git/
+.gitignore
+.github/
+
+# 忽略文档
+*.md
+!README.md
+docs/
+
+# 忽略测试文件
+test_*.py
+*_test.py
+.pytest_cache/
+.coverage
+
+# 忽略数据文件（通过 volumes 挂载）
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# 忽略日志文件（通过 volumes 挂载）
+logs/
+*.log
+
+# 忽略报告文件（通过 volumes 挂载）
+reports/
+
+# 忽略临时文件
+tmp*
+*.tmp
+nul
+.DS_Store
+Thumbs.db
+
+# 忽略构建产物
+build/
+dist/
+*.egg-info/
+
+# 忽略 Jupyter
+.ipynb_checkpoints/
+*.ipynb

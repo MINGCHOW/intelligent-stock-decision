@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📖 完整配置指南
+    url: https://github.com/MINGCHOW/intelligent-stock-decision/blob/main/docs/full-guide.md
+    about: 查看详细配置和部署文档
+  - name: 💬 讨论
+    url: https://github.com/MINGCHOW/intelligent-stock-decision/discussions
+    about: 在 Discussions 中提问和交流
