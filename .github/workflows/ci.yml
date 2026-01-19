@@ -5,7 +5,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master, main]
     paths:
       - '**.py'
       - 'requirements.txt'
@@ -15,7 +15,7 @@ on:
       - 'Dockerfile'
       - 'docker-compose.yml'
   pull_request:
-    branches: [main]
+    branches: [master, main]
     paths:
       - '**.py'
       - 'requirements.txt'
