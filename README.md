@@ -152,7 +152,96 @@ By default, the system runs automatically at **18:00 Beijing time** on weekdays.
 
 ### Local Deployment
 
-> For detailed local deployment and Docker setup, see [Full Configuration Guide](docs/full-guide.md)
+#### Option 1: Docker Deployment (Recommended)
+
+**Prerequisites:**
+- Docker installed (version 20.10+)
+- Docker Compose installed (version 2.0+)
+
+**Quick Start with Docker Compose:**
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/MINGCHOW/intelligent-stock-decision.git
+cd intelligent-stock-decision
+
+# 2. Create configuration file
+cp .env.example .env
+
+# 3. Edit .env with your configurations
+# Required variables:
+#   - GEMINI_API_KEY (or OPENAI_API_KEY)
+#   - STOCK_LIST (e.g., 600519,00700.HK,300750)
+#   - TAVILY_API_KEYS (recommended)
+#   - Notification channels (at least one)
+
+# 4. Build and run with Docker Compose
+docker-compose up -d
+
+# 5. View logs
+docker-compose logs -f
+
+# 6. Stop the container
+docker-compose down
+```
+
+**Manual Docker Build:**
+
+```bash
+# 1. Build the image
+docker build -t intelligent-stock-decision .
+
+# 2. Run the container
+docker run -d \
+  --name stock-analysis \
+  --env-file .env \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/reports:/app/reports \
+  intelligent-stock-decision
+
+# 3. View logs
+docker logs -f stock-analysis
+
+# 4. Stop the container
+docker stop stock-analysis
+docker rm stock-analysis
+```
+
+**Scheduled Execution with Docker:**
+
+```bash
+# Run once at 6 PM daily (Linux/Mac with cron)
+# Add to crontab: crontab -e
+0 18 * * 1-5 cd /path/to/intelligent-stock-decision && docker-compose up && docker-compose logs -f && docker-compose down
+```
+
+**Data Persistence:**
+
+The Docker setup includes two volume mounts:
+- `./data` - Database and cache files
+- `./reports` - Generated analysis reports
+
+#### Option 2: Local Python Environment
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Configure environment
+cp .env.example .env
+# Edit .env with your configurations
+
+# 3. Run analysis
+python main.py
+
+# 4. Run with options
+python main.py --stocks 600519,00700.HK    # Specific stocks
+python main.py --market-review             # Market review only
+python main.py --dry-run                   # Fetch data only
+python main.py --webui                     # Start web interface
+```
+
+> For detailed configuration options, see [Full Configuration Guide](docs/full-guide.md)
 
 ## Output Examples
 
