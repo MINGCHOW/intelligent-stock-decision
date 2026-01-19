@@ -34,6 +34,9 @@ class Config:
     tavily_api_keys: str = ""
     serpapi_keys: str = ""
 
+    # 数据源 Token
+    tushare_token: str = ""
+
     # 通知渠道
     wechat_webhook_url: str = ""
     feishu_webhook_url: str = ""
@@ -96,6 +99,7 @@ def get_config() -> Config:
         _config_instance.bocha_api_keys = os.getenv("BOCHA_API_KEYS", "")
         _config_instance.tavily_api_keys = os.getenv("TAVILY_API_KEYS", "")
         _config_instance.serpapi_keys = os.getenv("SERPAPI_API_KEYS", "")
+        _config_instance.tushare_token = os.getenv("TUSHARE_TOKEN", "")
 
         _config_instance.wechat_webhook_url = os.getenv("WECHAT_WEBHOOK_URL", "")
         _config_instance.feishu_webhook_url = os.getenv("FEISHU_WEBHOOK_URL", "")
