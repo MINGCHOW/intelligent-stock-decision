@@ -1,405 +1,405 @@
-# 智能股票决策系统
+# Intelligent Stock Decision System
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Actions](https://img.shields.io/badge/deployment-GitHub%20Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
 
-基于四层决策体系的 A股/港股智能分析系统，融合技术面分析与舆情过滤，提供量化交易决策支持。
+An intelligent A-share and Hong Kong stock analysis system based on a four-layer decision framework, combining technical analysis with sentiment filtering for quantitative trading decision support.
 
-## 核心特性
+## Core Features
 
-### 四层决策体系（Pro 版 v2.1）
+### Four-Layer Decision System (Pro v2.1)
 
-**第一层：趋势过滤（硬性条件）**
-- MA5 > MA10 > MA20 多头排列
-- 不满足直接观望，不参与下跌趋势
+**Layer 1: Trend Filter (Hard Condition)**
+- MA5 > MA10 > MA20 bullish alignment
+- No participation in downtrends if not met
 
-**第二层：位置过滤（硬性条件）**
-- A股：乖离率 < 5%
-- 港股：乖离率 < 6%
-- 严格控制追高风险
+**Layer 2: Position Filter (Hard Condition)**
+- A-shares: Bias rate < 5%
+- Hong Kong stocks: Bias rate < 6%
+- Strictly control chasing high prices
 
-**第三层：辅助确认（加分制）**
-- 基础分 70 分
-- MACD 金叉：+10 分
-- RSI 健康（40-60）：+10 分，超卖区（<40）：+15 分
-- ATR 波动率健康：+5 分
-- 总分 ≥ 80 分触发买入信号
+**Layer 3: Auxiliary Confirmation (Scoring System)**
+- Base score: 70 points
+- MACD golden cross: +10 points
+- RSI healthy (40-60): +10 points, oversold (<40): +15 points
+- ATR stable: +5 points
+- Total score ≥ 80 triggers buy signal
 
-**第四层：舆情过滤（硬性+加分）**
-- **一票否决**：重大利空（财务造假、立案调查、退市风险）→ 直接观望
-- **加分机制**：明显利好（股份回购、业绩超预期、重大合同）→ +5 分
-- **中性舆情**：保持技术面评分不变
+**Layer 4: Sentiment Filter (Hard Veto + Bonus)**
+- **Veto power**: Severe negative news (financial fraud, investigation, delisting risk) → immediate wait
+- **Bonus mechanism**: Clear positive news (share repurchase, earnings beat, major contracts) → +5 points
+- **Neutral sentiment**: Maintain technical score
 
-### 技术指标（纯 pandas 实现）
+### Technical Indicators (Pure Pandas Implementation)
 
-- **MACD (12, 26, 9)**：趋势确认
-- **RSI (14)**：超买超卖判断
-- **ATR (14)**：波动率评估
+- **MACD (12, 26, 9)**: Trend confirmation
+- **RSI (14)**: Overbought/oversold detection
+- **ATR (14)**: Volatility assessment
 
-### 市场自适应策略
+### Market-Adaptive Strategy
 
-- A股：乖离率 5%，ATR < 3%
-- 港股：乖离率 6%，ATR < 4%
-- 自动识别市场类型（6位代码 → A股，xxx.HK → 港股）
+- A-shares: Bias rate 5%, ATR < 3%
+- Hong Kong stocks: Bias rate 6%, ATR < 4%
+- Auto-detect market type (6-digit code → A-share, xxx.HK → Hong Kong)
 
-### 数据源与AI模型
+### Data Sources and AI Models
 
-**数据源（5种，自动故障切换）**
-- Efinance（主数据源，免费）
-- AkShare（备选）
-- Tushare Pro（需注册，稳定）
-- Baostock（备选）
-- YFinance（支持港股）
+**Data Sources (5 types with auto failover)**
+- Efinance (primary, free)
+- AkShare (backup)
+- Tushare Pro (registration required, stable)
+- Baostock (backup)
+- YFinance (Hong Kong stocks)
 
-**舆情搜索（第四层过滤）**
-- Tavily API（推荐）
-- SerpAPI（备选）
-- Bocha API（备选）
+**Sentiment Search (Layer 4 filtering)**
+- Tavily API (recommended)
+- SerpAPI (backup)
+- Bocha API (backup)
 
-**AI 分析模型**
-- 主力：Google Gemini（免费额度充足）
-- 备选：OpenAI 兼容 API（DeepSeek、通义千问等）
+**AI Analysis Models**
+- Primary: Google Gemini (generous free tier)
+- Backup: OpenAI-compatible API (DeepSeek, Qwen, etc.)
 
-### 通知渠道
+### Notification Channels
 
-- 企业微信 Webhook
-- 飞书 Webhook（支持云文档存储）
+- WeChat Work Webhook
+- Feishu Webhook (with cloud document storage)
 - Telegram Bot
-- 自定义 Webhook（钉钉、Discord、Slack、Bark 等）
-- Pushover（iOS/Android 推送）
+- Custom Webhook (DingTalk, Discord, Slack, Bark, etc.)
+- Pushover (iOS/Android push)
 
-## 快速开始
+## Quick Start
 
-### GitHub Actions 部署（推荐）
+### GitHub Actions Deployment (Recommended)
 
-**无需服务器，每日自动执行**
+**No server required, runs automatically every day**
 
-#### 1. Fork 本项目
+#### 1. Fork This Repository
 
-点击右上角 Fork 按钮
+Click the Fork button in the top right
 
-#### 2. 配置 GitHub Secrets
+#### 2. Configure GitHub Secrets
 
-进入仓库 → Settings → Secrets and variables → Actions → New repository secret
+Go to repository → Settings → Secrets and variables → Actions → New repository secret
 
-**必需配置**
+**Required Configuration**
 
-| Secret 名称 | 说明 | 获取方式 |
-|------------|------|---------|
-| `GEMINI_API_KEY` | Google AI API Key | [Google AI Studio](https://aistudio.google.com/) 免费获取 |
-| `STOCK_LIST` | 自选股代码（逗号分隔） | 示例：`600519,00700.HK,300750` |
-| `TAVILY_API_KEYS` | Tavily 搜索 API | [Tavily](https://tavily.com/) 注册获取 |
+| Secret Name | Description | How to Get |
+|------------|-------------|------------|
+| `GEMINI_API_KEY` | Google AI API Key | Get free from [Google AI Studio](https://aistudio.google.com/) |
+| `STOCK_LIST` | Stock symbols (comma-separated) | Example: `600519,00700.HK,300750` |
+| `TAVILY_API_KEYS` | Tavily Search API | Register at [Tavily](https://tavily.com/) |
 
-**通知渠道（至少配置一个）**
+**Notification Channels (configure at least one)**
 
-| Secret 名称 | 说明 |
-|------------|------|
-| `WECHAT_WEBHOOK_URL` | 企业微信 Webhook URL |
-| `FEISHU_WEBHOOK_URL` | 飞书 Webhook URL |
+| Secret Name | Description |
+|------------|-------------|
+| `WECHAT_WEBHOOK_URL` | WeChat Work Webhook URL |
+| `FEISHU_WEBHOOK_URL` | Feishu Webhook URL |
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot Token |
 | `TELEGRAM_CHAT_ID` | Telegram Chat ID |
-| `CUSTOM_WEBHOOK_URLS` | 自定义 Webhook URL（多个用逗号分隔） |
+| `CUSTOM_WEBHOOK_URLS` | Custom Webhook URLs (comma-separated) |
 
-**可选配置**
+**Optional Configuration**
 
-| Secret 名称 | 说明 |
-|------------|------|
-| `OPENAI_API_KEY` | OpenAI 兼容 API Key（DeepSeek、通义千问等） |
-| `OPENAI_BASE_URL` | OpenAI 兼容 API 地址 |
-| `OPENAI_MODEL` | 模型名称（如 `deepseek-chat`） |
-| `BOCHA_API_KEYS` | 博查搜索 API（备选） |
-| `SERPAPI_API_KEYS` | SerpAPI 备用搜索 |
+| Secret Name | Description |
+|------------|-------------|
+| `OPENAI_API_KEY` | OpenAI-compatible API Key (DeepSeek, Qwen, etc.) |
+| `OPENAI_BASE_URL` | OpenAI-compatible API endpoint |
+| `OPENAI_MODEL` | Model name (e.g., `deepseek-chat`) |
+| `BOCHA_API_KEYS` | Bocha Search API (backup) |
+| `SERPAPI_API_KEYS` | SerpAPI backup search |
 | `TUSHARE_TOKEN` | Tushare Pro Token |
-| `FEISHU_APP_ID` | 飞书云文档 App ID |
-| `FEISHU_APP_SECRET` | 飞书云文档 App Secret |
-| `FEISHU_FOLDER_TOKEN` | 飞书云文档文件夹 Token |
-| `PUSHOVER_USER_KEY` | Pushover 用户 Key |
+| `FEISHU_APP_ID` | Feishu Cloud Document App ID |
+| `FEISHU_APP_SECRET` | Feishu Cloud Document App Secret |
+| `FEISHU_FOLDER_TOKEN` | Feishu Cloud Document Folder Token |
+| `PUSHOVER_USER_KEY` | Pushover User Key |
 | `PUSHOVER_API_TOKEN` | Pushover API Token |
-| `SINGLE_STOCK_NOTIFY` | 单股推送模式（设为 `true`） |
+| `SINGLE_STOCK_NOTIFY` | Single stock notification mode (set to `true`) |
 
-#### 3. 启用 GitHub Actions
+#### 3. Enable GitHub Actions
 
-进入 Actions 标签 → 点击启用工作流
+Go to Actions tab → Click to enable workflows
 
-#### 4. 手动测试
+#### 4. Manual Test
 
-Actions → 每日股票分析 → Run workflow → Run workflow
+Actions → Daily Stock Analysis → Run workflow → Run workflow
 
-#### 5. 定时执行
+#### 5. Scheduled Execution
 
-默认每个工作日 18:00（北京时间）自动执行
+Automatically runs at 18:00 Beijing time every weekday by default
 
-### 本地运行
+### Local Run
 
 ```bash
-# 安装依赖
+# Install dependencies
 pip install -r requirements.txt
 
-# 配置环境变量
+# Configure environment variables
 cp .env.example .env
-# 编辑 .env 文件，填入必要的配置
+# Edit .env file with necessary configurations
 
-# 运行分析
+# Run analysis
 python main.py
 
-# 仅大盘复盘
+# Market review only
 python main.py --market-review
 
-# 仅个股分析
+# Individual stock analysis only
 python main.py --no-market-review
 
-# 指定股票
+# Specify stocks
 python main.py --stocks 600519,00700.HK
 
-# 干运行（仅获取数据，不AI分析）
+# Dry run (fetch data only, no AI analysis)
 python main.py --dry-run
 
-# 不发送推送
+# No notifications
 python main.py --no-notify
 
-# 定时任务模式
+# Scheduled task mode
 python main.py --schedule
 
-# 指定并发数
+# Specify concurrency
 python main.py --workers 5
 
-# 调试模式
+# Debug mode
 python main.py --debug
 ```
 
-## 决策输出示例
+## Decision Output Examples
 
-### 个股分析
-
-```
-📊 贵州茅台(600519) - 2026-01-19
-
-【四层决策结果】
-第一层（趋势）：✅ MA5(1785) > MA10(1772) > MA20(1765)，多头排列
-第二层（位置）：✅ 乖离率 1.2%，低于5%警戒线
-第三层（指标）：✅ MACD金叉 + RSI健康(52) + ATR稳定(2.1%)，总分85分
-第四层（舆情）：✅ 业绩超预期、股份回购，舆情评分+5分
-
-【最终信号】🟢 买入
-
-【操作建议】
-狙击价位：买入 1780 | 止损 1750 | 目标 1900
-当前价格：1782.50（-0.14%）
-
-【风险提示】
-⚠️ 大盘调整风险
-⚠️ 北向资金流出
-```
-
-### 大盘复盘
+### Individual Stock Analysis
 
 ```
-🎯 2026-01-19 大盘复盘
+📊 Kweichow Moutai(600519) - 2026-01-19
 
-📊 主要指数
-上证指数: 3250.12 (+0.85%)
-深证成指: 10521.36 (+1.02%)
-创业板指: 2156.78 (+1.35%)
+【Four-Layer Decision Result】
+Layer 1 (Trend): ✅ MA5(1785) > MA10(1772) > MA20(1765), bullish alignment
+Layer 2 (Position): ✅ Bias rate 1.2%, below 5% warning line
+Layer 3 (Indicators): ✅ MACD golden cross + RSI healthy(52) + ATR stable(2.1%), total score 85
+Layer 4 (Sentiment): ✅ Earnings beat, share repurchase, sentiment score +5
 
-📈 市场概况
-上涨: 3920 | 下跌: 1349 | 涨停: 155 | 跌停: 3
+【Final Signal】🟢 Buy
 
-🔥 板块表现
-领涨: 互联网服务、文化传媒、小金属
-领跌: 保险、航空机场、光伏设备
+【Trading Recommendations】
+Entry Price: Buy 1780 | Stop Loss 1750 | Target 1900
+Current Price: 1782.50 (-0.14%)
 
-💰 资金流向
-北向资金: +85.6亿
-南向资金: +32.1亿
+【Risk Warnings】
+⚠️ Market correction risk
+⚠️ Northbound capital outflow
 ```
 
-## 项目结构
+### Market Review
+
+```
+🎯 2026-01-19 Market Review
+
+📊 Major Indices
+Shanghai Composite: 3250.12 (+0.85%)
+Shenzhen Component: 10521.36 (+1.02%)
+ChiNext Index: 2156.78 (+1.35%)
+
+📈 Market Overview
+Advancing: 3920 | Declining: 1349 | Limit Up: 155 | Limit Down: 3
+
+🔥 Sector Performance
+Leaders: Internet Services, Culture Media, Minor Metals
+Laggards: Insurance, Aviation Airport, Photovoltaic Equipment
+
+💰 Capital Flows
+Northbound: +8.56B RMB
+Southbound: +3.21B RMB
+```
+
+## Project Structure
 
 ```
 intelligent-stock-decision/
-├── main.py                  # 主程序入口
-├── analyzer.py              # AI 分析器（四层决策体系）
-├── stock_analyzer.py        # 技术分析引擎（四层决策+舆情过滤）
-├── market_analyzer.py       # 大盘复盘分析
-├── search_service.py        # 舆情搜索服务
-├── notification.py          # 消息推送核心
-├── notification_pro.py      # 飞书文档优化
-├── feishu_doc.py            # 飞书云文档存储
-├── scheduler.py             # 定时任务
-├── storage.py               # 数据存储（SQLite）
-├── config.py                # 配置管理
-├── data_provider/           # 数据源适配器
-│   ├── efinance_fetcher.py  # Efinance 数据源
-│   ├── akshare_fetcher.py   # AkShare 数据源
-│   ├── tushare_fetcher.py   # Tushare Pro 数据源
-│   ├── baostock_fetcher.py  # Baostock 数据源
-│   └── yfinance_fetcher.py  # YFinance 数据源（港股）
-├── .github/workflows/       # GitHub Actions 配置
-│   ├── daily_analysis.yml   # 每日分析工作流
-│   ├── ci.yml               # CI 检查
-│   ├── pr-review.yml        # PR 审查
-│   └── stale.yml            # 逾期 issue 管理
-├── requirements.txt         # Python 依赖
-└── .env.example             # 环境变量模板
+├── main.py                  # Main entry point
+├── analyzer.py              # AI analyzer (four-layer decision system)
+├── stock_analyzer.py        # Technical analysis engine (four-layer + sentiment)
+├── market_analyzer.py       # Market review analysis
+├── search_service.py        # Sentiment search service
+├── notification.py          # Notification core
+├── notification_pro.py      # Feishu document optimization
+├── feishu_doc.py            # Feishu cloud document storage
+├── scheduler.py             # Scheduled tasks
+├── storage.py               # Data storage (SQLite)
+├── config.py                # Configuration management
+├── data_provider/           # Data source adapters
+│   ├── efinance_fetcher.py  # Efinance data source
+│   ├── akshare_fetcher.py   # AkShare data source
+│   ├── tushare_fetcher.py   # Tushare Pro data source
+│   ├── baostock_fetcher.py  # Baostock data source
+│   └── yfinance_fetcher.py  # YFinance data source (Hong Kong stocks)
+├── .github/workflows/       # GitHub Actions configurations
+│   ├── daily_analysis.yml   # Daily analysis workflow
+│   ├── ci.yml               # CI checks
+│   ├── pr-review.yml        # PR review
+│   └── stale.yml            # Stale issue management
+├── requirements.txt         # Python dependencies
+└── .env.example             # Environment variable template
 ```
 
-## 决策体系详解
+## Decision System Details
 
-### 第一层：趋势过滤
+### Layer 1: Trend Filter
 
-**目的**：避免逆势交易，只在多头排列时参与
+**Purpose**: Avoid counter-trend trading, only participate in bullish alignments
 
-**条件**：
+**Condition**:
 ```
 MA5 > MA10 > MA20
 ```
 
-**通过标准**：三条均线严格多头排列
+**Pass Standard**: Strict bullish alignment of three moving averages
 
-### 第二层：位置过滤
+### Layer 2: Position Filter
 
-**目的**：控制追高风险，等待回调买点
+**Purpose**: Control chasing risk, wait for pullback entry
 
-**条件**：
+**Condition**:
 ```
-乖离率 = (当前价 - MA20) / MA20 * 100%
-A股：乖离率 < 5%
-港股：乖离率 < 6%
-```
-
-**通过标准**：价格未过度偏离20日均线
-
-### 第三层：辅助确认
-
-**目的**：技术指标共振，提高胜率
-
-**评分标准**：
-```
-基础分：70 分
-MACD 金叉（DIF > DEA）：+10 分
-RSI 健康（40-60）：+10 分
-RSI 超卖（<40）：+15 分
-ATR 稳定（A股<3%，港股<4%）：+5 分
-总分 ≥ 80 分：触发买入信号
+Bias Rate = (Current Price - MA20) / MA20 * 100%
+A-shares: Bias Rate < 5%
+Hong Kong stocks: Bias Rate < 6%
 ```
 
-### 第四层：舆情过滤
+**Pass Standard**: Price not excessively deviated from 20-day moving average
 
-**目的**：避免黑天鹅事件，捕捉利好机会
+### Layer 3: Auxiliary Confirmation
 
-**一票否决关键词**（严重级别）：
-- 财务造假、虚增收入、重大财务造假
-- 立案调查、监管调查、证监会调查
-- 退市风险、暂停上市、终止上市
-- 重大诉讼、巨额赔偿、债务违约
-- 实控人失联、高管被查
+**Purpose**: Technical indicator resonance, improve win rate
 
-**加分关键词**（2条以上强利好）：
-- 股份回购、增持计划、业绩超预期
-- 重大合同、中标项目、产品获批
-- 机构调研、外资买入、北向加仓
+**Scoring Standard**:
+```
+Base Score: 70 points
+MACD Golden Cross (DIF > DEA): +10 points
+RSI Healthy (40-60): +10 points
+RSI Oversold (<40): +15 points
+ATR Stable (A-shares <3%, HK <4%): +5 points
+Total ≥ 80 points: Trigger buy signal
+```
 
-## 配置说明
+### Layer 4: Sentiment Filter
 
-### 环境变量
+**Purpose**: Avoid black swan events, capture positive opportunities
 
-完整配置说明请参考 `.env.example` 文件。
+**Veto Keywords** (Severe level):
+- Financial fraud, revenue inflation, accounting irregularities
+- Investigation, regulatory probe, CSRC investigation
+- Delisting risk, trading suspension, termination
+- Major litigation, huge penalties, debt default
+- Controlling person missing, executives investigated
 
-### 关键配置项
+**Bonus Keywords** (2+ strong positive):
+- Share repurchase, buyback plan, earnings beat
+- Major contracts, project wins, product approval
+- Institutional research, foreign buying, northbound accumulation
+
+## Configuration
+
+### Environment Variables
+
+Refer to `.env.example` file for complete configuration details.
+
+### Key Configuration Items
 
 ```bash
-# AI 模型配置（二选一）
+# AI Model Configuration (choose one)
 GEMINI_API_KEY=your_gemini_api_key_here
 # OPENAI_API_KEY=your_openai_api_key_here
 # OPENAI_BASE_URL=https://api.deepseek.com/v1
 # OPENAI_MODEL=deepseek-chat
 
-# 自选股配置（必填）
+# Watchlist Configuration (required)
 STOCK_LIST=600519,00700.HK,300750
 
-# 搜索服务（第四层舆情过滤，至少配置一个）
+# Search Services (Layer 4 sentiment filtering, configure at least one)
 TAVILY_API_KEYS=your_tavily_api_key_here
 # BOCHA_API_KEYS=key1,key2,key3
 # SERPAPI_API_KEYS=your_serpapi_api_key_here
 
-# 通知渠道（至少配置一个）
+# Notification Channels (configure at least one)
 WECHAT_WEBHOOK_URL=https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx
 # FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxx
 # TELEGRAM_BOT_TOKEN=your_bot_token
 # TELEGRAM_CHAT_ID=your_chat_id
 # CUSTOM_WEBHOOK_URLS=https://oapi.dingtalk.com/robot/send?access_token=xxx
 
-# 并发配置
+# Concurrency Configuration
 MAX_CONCURRENT=3
 DATA_DAYS=60
 ```
 
-## 技术架构
+## Technical Architecture
 
-### 数据流
+### Data Flow
 
 ```
-数据获取（5种数据源，自动故障切换）
+Data Fetching (5 data sources with auto failover)
     ↓
-舆情搜索（Tavily/SerpAPI/Bocha）
+Sentiment Search (Tavily/SerpAPI/Bocha)
     ↓
-第一层：趋势过滤（MA5 > MA10 > MA20）
+Layer 1: Trend Filter (MA5 > MA10 > MA20)
     ↓
-第二层：位置过滤（乖离率 < 阈值）
+Layer 2: Position Filter (Bias Rate < Threshold)
     ↓
-第三层：辅助确认（MACD+RSI+ATR 加分）
+Layer 3: Auxiliary Confirmation (MACD+RSI+ATR scoring)
     ↓
-第四层：舆情过滤（重大利空一票否决）
+Layer 4: Sentiment Filter (Severe negative news veto)
     ↓
-最终信号 + AI 分析
+Final Signal + AI Analysis
     ↓
-多渠道推送
+Multi-Channel Notifications
 ```
 
-### 错误处理
+### Error Handling
 
-- 数据源自动故障切换
-- AI 模型自动降级（Gemini → OpenAI）
-- 搜索引擎自动轮换
-- 完整的日志记录和错误追踪
+- Automatic data source failover
+- AI model automatic downgrade (Gemini → OpenAI)
+- Search engine automatic rotation
+- Complete logging and error tracking
 
 ## Roadmap
 
-### 已完成功能
+### Completed Features
 
-- [x] 四层决策体系
-- [x] 舆情过滤层（一票否决+加分机制）
-- [x] MACD/RSI/ATR 技术指标（纯 pandas 实现）
-- [x] 市场自适应策略（A股 vs 港股）
-- [x] 多数据源支持（5种，自动故障切换）
-- [x] 多搜索引擎支持（3种）
-- [x] AI 分析（Gemini + OpenAI 兼容）
-- [x] 多渠道推送（5种）
-- [x] 飞书云文档存储
-- [x] GitHub Actions 部署
-- [x] 大盘复盘
+- [x] Four-layer decision system
+- [x] Sentiment filtering layer (veto power + bonus mechanism)
+- [x] MACD/RSI/ATR technical indicators (pure pandas implementation)
+- [x] Market-adaptive strategy (A-share vs Hong Kong)
+- [x] Multi-data source support (5 types with auto failover)
+- [x] Multi-search engine support (3 types)
+- [x] AI analysis (Gemini + OpenAI compatible)
+- [x] Multi-channel notifications (5 types)
+- [x] Feishu cloud document storage
+- [x] GitHub Actions deployment
+- [x] Market review
 
-### 计划功能
+### Planned Features
 
-- [ ] 历史回测与策略优化
-- [ ] 美股支持
-- [ ] 更多技术指标（KDJ、BOLL等）
-- [ ] 自定义策略模板
-- [ ] Web 管理界面
+- [ ] Historical backtesting and strategy optimization
+- [ ] US stock support
+- [ ] More technical indicators (KDJ, BOLL, etc.)
+- [ ] Custom strategy templates
+- [ ] Web management interface
 
-## 免责声明
+## Disclaimer
 
-本项目仅供学习研究使用，不构成任何投资建议。股市有风险，投资需谨慎。作者不对使用本项目产生的任何损失负责。
+This project is for learning and research purposes only and does not constitute any investment advice. Stock market investing carries risks; invest cautiously. The author is not responsible for any losses resulting from the use of this project.
 
 ## License
 
 MIT License
 
-## 贡献
+## Contributing
 
-欢迎提交 Issue 和 Pull Request。
+Issues and Pull Requests are welcome.
 
-## 技术支持
+## Support
 
-如有问题或建议，请提交 GitHub Issue。
+For questions or suggestions, please submit a GitHub Issue.
