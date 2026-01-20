@@ -117,11 +117,13 @@ Navigate to: `Settings` → `Secrets and variables` → `Actions` → `New repos
 | `EMAIL_RECEIVERS` | Recipient emails (comma-separated) | Optional |
 | `CUSTOM_WEBHOOK_URLS` | Custom webhook URLs (comma-separated) | Optional |
 | `CUSTOM_WEBHOOK_BEARER_TOKEN` | Bearer token for authenticated webhooks | Optional |
+| `PUSHOVER_USER_KEY` | Pushover user key (get from [pushover.net](https://pushover.net)) | Optional |
+| `PUSHOVER_API_TOKEN` | Pushover application token | Optional |
 | `SINGLE_STOCK_NOTIFY` | Set to `true` for immediate single-stock push | Optional |
 
 > Configure at least one notification channel
 >
-> For additional configurations (Pushover, Feishu cloud docs), see [Full Configuration Guide](docs/full-guide.md)
+> For Feishu cloud document storage, see [Full Configuration Guide](docs/full-guide.md)
 
 **Stock List Configuration**
 
@@ -137,6 +139,29 @@ Navigate to: `Settings` → `Secrets and variables` → `Actions` → `New repos
 | `BOCHA_API_KEYS` | Bocha search API (comma-separated) | Optional |
 | `SERPAPI_API_KEYS` | SerpAPI backup search | Optional |
 | `TUSHARE_TOKEN` | Tushare Pro token | Optional |
+
+**Feishu Cloud Document Storage**
+
+| Secret Name | Description | Required |
+|------------|-------------|:--------:|
+| `FEISHU_APP_ID` | Feishu application ID (for cloud document generation) | Optional |
+| `FEISHU_APP_SECRET` | Feishu application secret | Optional |
+| `FEISHU_FOLDER_TOKEN` | Target folder token for storing documents | Optional |
+
+**Advanced Configuration (Optional)**
+
+| Secret Name | Description | Default |
+|------------|-------------|---------|
+| `MAX_CONCURRENT` | Max concurrent workers | 3 |
+| `DATA_DAYS` | Historical data days | 60 |
+| `DEBUG` | Enable debug mode | false |
+| `LOG_LEVEL` | Logging level (DEBUG/INFO/WARNING/ERROR) | INFO |
+| `AKSHARE_SLEEP_MIN` | Akshare min request interval (seconds) | 2.0 |
+| `AKSHARE_SLEEP_MAX` | Akshare max request interval (seconds) | 5.0 |
+| `TUSHARE_RATE_LIMIT_PER_MINUTE` | Tushare rate limit | 80 |
+| `MAX_RETRIES` | Max retry attempts | 3 |
+| `FEISHU_MAX_BYTES` | Feishu message size limit (bytes) | 20000 |
+| `WECHAT_MAX_BYTES` | WeChat message size limit (bytes) | 4000 |
 
 #### 3. Enable GitHub Actions
 
@@ -238,7 +263,8 @@ python main.py
 python main.py --stocks 600519,00700.HK    # Specific stocks
 python main.py --market-review             # Market review only
 python main.py --dry-run                   # Fetch data only
-python main.py --webui                     # Start web interface
+python main.py --webui                     # Start web UI with analysis
+python main.py --webui-only                # Web UI only (no auto-analysis)
 ```
 
 > For detailed configuration options, see [Full Configuration Guide](docs/full-guide.md)
@@ -290,8 +316,10 @@ Laggards: Insurance, Aviation Airport, Photovoltaic Equipment
 
 When running locally, enable the Web UI for convenient stock list management:
 
-- Launch command: `python main.py --webui`
+- **Launch with analysis**: `python main.py --webui`
+- **WebUI-only mode**: `python main.py --webui-only` (starts server without auto-analysis)
 - Access URL: `http://127.0.0.1:8000`
+- Features: Real-time stock list editing, manual analysis trigger via API
 - See [Configuration Guide - WebUI](docs/full-guide.md#local-webui-management) for details
 
 ## Project Structure
