@@ -46,7 +46,7 @@ jobs:
           # Gemini AI
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ secrets.GEMINI_MODEL || 'gemini-2.0-flash-exp' }}
-          GEMINI_MODEL_FALLBACK: ${{ secrets.GEMINI_MODEL_FALLBACK || 'gemini-1.5-flash-002' }}
+          GEMINI_MODEL_FALLBACK: ${{ secrets.GEMINI_MODEL_FALLBACK || 'gemini-1.5-flash' }}
           GEMINI_REQUEST_DELAY: '3.0'  # GitHub Actions 建议增加延时
           
           # 数据源 (可选)
@@ -85,28 +85,30 @@ jobs:
           
           # 自选股列表 (从 secrets 或使用默认值)
           STOCK_LIST: ${{ secrets.STOCK_LIST || '600519' }}
-          
+
           # 其他配置
           LOG_LEVEL: INFO
           DATA_DAYS: 60
           MAX_CONCURRENT: 3
+          REPORT_TYPE: full  # GitHub Actions 手动触发使用完整报告（决策仪表盘格式）
         run: |
           # 判断运行模式
           MODE="${{ github.event.inputs.mode || 'full' }}"
           
           echo "=========================================="
           echo "运行模式: $MODE"
+          echo "报告类型: 完整报告（决策仪表盘格式）"
           echo "自选股: $STOCK_LIST"
           echo "时间: $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')"
           echo "舆情搜索: $([ -n "$TAVILY_API_KEYS$SERPAPI_API_KEYS$BOCHA_API_KEYS" ] && echo '已启用（第四层过滤）' || echo '未启用')"
           echo "=========================================="
-          
+
           if [ "$MODE" = "market-only" ]; then
             python main.py --market-review
           elif [ "$MODE" = "stocks-only" ]; then
-            python main.py --no-market-review
+            python main.py --no-market-review --report-type full
           else
-            python main.py
+            python main.py --report-type full
           fi
       
       - name: 上传分析报告
