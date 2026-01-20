@@ -496,26 +496,33 @@ def convert_stock_code_for_yfinance(stock_code: str) -> str:
     """
     转换股票代码为 Yahoo Finance 格式
 
-    Yahoo Finance A 股代码格式：
+    Yahoo Finance 代码格式：
     - 沪市：600519.SS (Shanghai Stock Exchange)
     - 深市：000001.SZ (Shenzhen Stock Exchange)
+    - 港股：01339.HK (Hong Kong Stock Exchange)
 
     Args:
-        stock_code: 原始代码，如 '600519', '000001'
+        stock_code: 原始代码，如 '600519', '000001', '01339.hk'
 
     Returns:
-        Yahoo Finance 格式代码，如 '600519.SS', '000001.SZ'
+        Yahoo Finance 格式代码
     """
-    code = stock_code.strip()
+    code = stock_code.strip().upper()
 
-    # 已经包含后缀的情况
-    if '.SS' in code.upper() or '.SZ' in code.upper():
-        return code.upper()
+    # 港股格式：XXXXX.HK
+    if code.endswith('.HK') or code.endswith('.hk'):
+        if not code.endswith('.HK'):
+            code = code.replace('.HK', '').replace('.hk', '') + '.HK'
+        return code
+
+    # 已经包含 A股后缀的情况
+    if '.SS' in code or '.SZ' in code:
+        return code
 
     # 去除可能的后缀
-    code = code.replace('.SH', '').replace('.sh', '')
+    code = code.replace('.SH', '').replace('.SZ', '')
 
-    # 根据代码前缀判断市场
+    # 根据代码前缀判断市场（A股）
     if code.startswith(('600', '601', '603', '688')):
         return f"{code}.SS"
     elif code.startswith(('000', '002', '300')):

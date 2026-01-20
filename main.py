@@ -51,6 +51,7 @@ from search_service import SearchService, SearchResponse
 from stock_analyzer import StockTrendAnalyzer, TrendAnalysisResult
 from market_analyzer import MarketAnalyzer
 from enums import ReportType
+from stock_name_resolver import get_name_resolver
 
 # 配置日志格式
 LOG_FORMAT = '%(asctime)s | %(levelname)-8s | %(name)-20s | %(message)s'
@@ -161,7 +162,16 @@ class StockAnalysisPipeline:
             tavily_keys=self.config.tavily_api_keys,
             serpapi_keys=self.config.serpapi_keys,
         )
-        
+
+        # 初始化股票名称解析器并预加载
+        try:
+            name_resolver = get_name_resolver()
+            logger.info("[StockScheduler] 正在预加载股票名称...")
+            name_resolver.preload_common_stocks()
+            logger.info("[StockScheduler] 股票名称预加载完成")
+        except Exception as e:
+            logger.warning(f"[StockScheduler] 股票名称预加载失败: {e}")
+
         logger.info(f"调度器初始化完成，最大并发数: {self.max_workers}")
         logger.info("已启用趋势分析器 (MA5>MA10>MA20 多头判断)")
         if self.search_service.is_available:
@@ -234,25 +244,27 @@ class StockAnalysisPipeline:
             AnalysisResult 或 None（如果分析失败）
         """
         try:
-            # 获取股票名称（优先从实时行情获取真实名称）
-            stock_name = STOCK_NAME_MAP.get(code, '')
-            
+            # 获取股票名称（使用名称解析器）
+            name_resolver = get_name_resolver()
+
             # Step 1: 获取实时行情（量比、换手率等）
             realtime_quote: Optional[RealtimeQuote] = None
+            realtime_name = None  # 从实时行情获取的名称
+
             try:
                 realtime_quote = self.akshare_fetcher.get_realtime_quote(code)
                 if realtime_quote:
-                    # 使用实时行情返回的真实股票名称
-                    if realtime_quote.name:
-                        stock_name = realtime_quote.name
-                    logger.info(f"[{code}] {stock_name} 实时行情: 价格={realtime_quote.price}, "
+                    # 提取实时行情中的股票名称
+                    realtime_name = realtime_quote.name if realtime_quote.name else None
+                    logger.info(f"[{code}] {realtime_name or code} 实时行情: 价格={realtime_quote.price}, "
                               f"量比={realtime_quote.volume_ratio}, 换手率={realtime_quote.turnover_rate}%")
             except Exception as e:
                 logger.warning(f"[{code}] 获取实时行情失败: {e}")
-            
-            # 如果还是没有名称，使用代码作为名称
-            if not stock_name:
-                stock_name = f'股票{code}'
+
+            # 使用名称解析器获取最终股票名称
+            # 优先级：实时行情名称 → 缓存 → Tushare → Akshare → YFinance
+            stock_name = name_resolver.get_stock_name(code, realtime_name)
+            logger.info(f"[{code}] 股票名称: {stock_name}")
             
             # Step 2: 获取筹码分布
             chip_data: Optional[ChipDistribution] = None

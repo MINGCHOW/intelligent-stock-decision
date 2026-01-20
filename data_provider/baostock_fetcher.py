@@ -111,33 +111,42 @@ class BaostockFetcher(BaseFetcher):
     def _convert_stock_code(self, stock_code: str) -> str:
         """
         转换股票代码为 Baostock 格式
-        
+
         Baostock 要求的格式：
         - 沪市：sh.600519
         - 深市：sz.000001
-        
+
+        ⚠️ 注意：Baostock 不支持港股，遇到港股会抛出异常
+
         Args:
-            stock_code: 原始代码，如 '600519', '000001'
-            
+            stock_code: 原始代码，如 '600519', '000001', '01339.hk'
+
         Returns:
             Baostock 格式代码，如 'sh.600519', 'sz.000001'
+
+        Raises:
+            DataFetchError: 如果是港股代码
         """
-        code = stock_code.strip()
-        
+        code = stock_code.strip().upper()
+
+        # 港股检查：Baostock 不支持港股
+        if code.endswith('.HK') or code.endswith('.hk'):
+            raise DataFetchError(f"Baostock 不支持港股数据（{stock_code}），跳过此数据源")
+
         # 已经包含前缀的情况
-        if code.startswith(('sh.', 'sz.')):
+        if code.startswith(('SH.', 'SZ.')) or code.startswith(('sh.', 'sz.')):
             return code.lower()
-        
+
         # 去除可能的后缀
         code = code.replace('.SH', '').replace('.SZ', '').replace('.sh', '').replace('.sz', '')
-        
-        # 根据代码前缀判断市场
+
+        # 根据代码前缀判断市场（仅支持A股）
         if code.startswith(('600', '601', '603', '688')):
             return f"sh.{code}"
         elif code.startswith(('000', '002', '300')):
             return f"sz.{code}"
         else:
-            logger.warning(f"无法确定股票 {code} 的市场，默认使用深市")
+            logger.warning(f"[BaostockFetcher] 无法确定股票 {stock_code} 的市场，默认使用深市")
             return f"sz.{code}"
     
     @retry(

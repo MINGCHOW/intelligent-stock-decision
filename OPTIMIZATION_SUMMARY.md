@@ -240,9 +240,64 @@ get_stock_market(stock_code)  # 'SH' / 'SZ' / 'HK'
 
 ---
 
+### 7. 创建股票名称解析器 (stock_name_resolver.py)
+
+**文件：** `stock_name_resolver.py` (新文件，450行)
+
+**问题描述：**
+- 股票名称只显示"股票{代码}"，无法显示真实名称
+- 实时行情获取失败时，fallback 逻辑使用代码作为名称
+- `STOCK_NAME_MAP` 静态映射只包含50只股票
+- 通知输出判断逻辑 `startswith('股票')` 导致始终显示代码
+
+**优化方案：**
+- ✅ 创建 `StockNameResolver` 单例类
+- ✅ 多数据源名称获取：Tushare → Akshare → YFinance（港股）
+- ✅ 两级缓存：内存缓存 + 持久化文件（`data/cache/stock_names.json`）
+- ✅ 启动时预加载所有A股名称（~5000只）
+- ✅ 修改 `main.py` 使用名称解析器
+- ✅ 修改 `notification.py` 去除 `startswith('股票')` 判断
+
+**API示例：**
+```python
+from stock_name_resolver import get_name_resolver
+
+resolver = get_name_resolver()
+
+# 单个查询
+name = resolver.get_stock_name('600519')  # '贵州茅台'
+name = resolver.get_stock_name('01339.hk')  # '中国海外发展'
+
+# 批量查询
+codes = ['600519', '000001', '300537']
+names = resolver.batch_get_names(codes)
+
+# 预加载（提升性能）
+resolver.preload_common_stocks()
+```
+
+**优先级策略：**
+```
+1. 实时行情名称（如果已获取）
+2. 内存缓存（最快）
+3. 持久化缓存文件
+4. Tushare 名称接口
+5. Akshare A股列表
+6. YFinance（港股专用）
+```
+
+**预期收益：**
+- **消除"股票{代码}"显示问题**
+- 支持5000+只A股名称自动识别
+- 支持港股名称识别
+- 缓存机制减少API调用
+- 首次启动后，名称查询延迟 < 1ms（内存缓存）
+
+---
+
 ## 🔄 进行中优化（P1优先级）
 
-### 7. 优化通知系统 (notification.py)
+### 8. 优化通知系统 (notification.py)
 
 **文件：** `notification.py` (待优化)
 
@@ -262,7 +317,7 @@ get_stock_market(stock_code)  # 'SH' / 'SZ' / 'HK'
 
 ---
 
-### 8. 添加搜索缓存TTL (search_service.py)
+### 9. 添加搜索缓存TTL (search_service.py)
 
 **文件：** `search_service.py` (待优化)
 
@@ -279,7 +334,7 @@ get_stock_market(stock_code)  # 'SH' / 'SZ' / 'HK'
 
 ---
 
-### 9. 优化数据库索引 (storage.py)
+### 10. 优化数据库索引 (storage.py)
 
 **文件：** `storage.py` (待优化)
 
@@ -296,7 +351,7 @@ get_stock_market(stock_code)  # 'SH' / 'SZ' / 'HK'
 
 ---
 
-### 10. 改进DataFetcherManager失败原因聚合 (base.py)
+### 11. 改进DataFetcherManager失败原因聚合 (base.py)
 
 **文件：** `data_provider/base.py` (待优化)
 
@@ -464,6 +519,6 @@ pytest-mock>=3.10.0
 
 ---
 
-**优化完成度：** 40% (5/12 核心任务已完成)
+**优化完成度：** 46% (6/13 核心任务已完成)
 **建议优先级：** 继续完成P1优先级任务
 **风险提示：** 建议添加单元测试后再部署到生产环境
