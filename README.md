@@ -156,6 +156,7 @@ Navigate to: `Settings` → `Secrets and variables` → `Actions` → `New repos
 | `DATA_DAYS` | Historical data days | 60 |
 | `DEBUG` | Enable debug mode | false |
 | `LOG_LEVEL` | Logging level (DEBUG/INFO/WARNING/ERROR) | INFO |
+| `REPORT_TYPE` | Report format (simple/full) | simple |
 | `AKSHARE_SLEEP_MIN` | Akshare min request interval (seconds) | 2.0 |
 | `AKSHARE_SLEEP_MAX` | Akshare max request interval (seconds) | 5.0 |
 | `TUSHARE_RATE_LIMIT_PER_MINUTE` | Tushare rate limit | 80 |
@@ -265,6 +266,35 @@ python main.py --market-review             # Market review only
 python main.py --dry-run                   # Fetch data only
 python main.py --webui                     # Start web UI with analysis
 python main.py --webui-only                # Web UI only (no auto-analysis)
+python main.py --report-type full          # Use full report format
+
+## Report Types
+
+The system supports two report formats:
+
+### Simple Report (Default)
+- Single stock format
+- Concise, suitable for mobile push notifications
+- Limited to essential information: buy/sell signal, score, key reasons
+- Best for: WeChat, Telegram, email notifications
+
+### Full Report
+- Decision dashboard format
+- Comprehensive technical analysis
+- Includes all indicators: MA alignment, MACD, RSI, ATR, sentiment analysis
+- Best for: Feishu cloud documents, detailed analysis
+
+**Usage Examples:**
+```bash
+# Simple report (default)
+python main.py
+
+# Full report for Feishu documents
+export REPORT_TYPE=full
+python main.py
+
+# Command line override
+python main.py --report-type full
 ```
 
 > For detailed configuration options, see [Full Configuration Guide](docs/full-guide.md)

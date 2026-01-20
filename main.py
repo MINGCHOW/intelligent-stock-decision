@@ -50,6 +50,7 @@ from notification import NotificationService, NotificationChannel, send_daily_re
 from search_service import SearchService, SearchResponse
 from stock_analyzer import StockTrendAnalyzer, TrendAnalysisResult
 from market_analyzer import MarketAnalyzer
+from enums import ReportType
 
 # 配置日志格式
 LOG_FORMAT = '%(asctime)s | %(levelname)-8s | %(name)-20s | %(message)s'
@@ -481,130 +482,145 @@ class StockAnalysisPipeline:
             return "巨量"
     
     def process_single_stock(
-        self, 
+        self,
         code: str,
         skip_analysis: bool = False,
-        single_stock_notify: bool = False
+        single_stock_notify: bool = False,
+        report_type: ReportType = ReportType.SIMPLE
     ) -> Optional[AnalysisResult]:
         """
         处理单只股票的完整流程
-        
+
         包括：
         1. 获取数据
         2. 保存数据
         3. AI 分析
         4. 单股推送（可选，#55）
-        
+
         此方法会被线程池调用，需要处理好异常
-        
+
         Args:
             code: 股票代码
             skip_analysis: 是否跳过 AI 分析
             single_stock_notify: 是否启用单股推送模式（每分析完一只立即推送）
-            
+            report_type: 报告类型（SIMPLE=精简, FULL=完整）
+
         Returns:
             AnalysisResult 或 None
         """
         logger.info(f"========== 开始处理 {code} ==========")
-        
+
         try:
             # Step 1: 获取并保存数据
             success, error = self.fetch_and_save_stock_data(code)
-            
+
             if not success:
                 logger.warning(f"[{code}] 数据获取失败: {error}")
                 # 即使获取失败，也尝试用已有数据分析
-            
+
             # Step 2: AI 分析
             if skip_analysis:
                 logger.info(f"[{code}] 跳过 AI 分析（dry-run 模式）")
                 return None
-            
+
             result = self.analyze_stock(code)
-            
+
             if result:
                 logger.info(
                     f"[{code}] 分析完成: {result.operation_advice}, "
                     f"评分 {result.sentiment_score}"
                 )
-                
+
                 # 单股推送模式（#55）：每分析完一只股票立即推送
                 if single_stock_notify and self.notifier.is_available():
                     try:
-                        single_report = self.notifier.generate_single_stock_report(result)
+                        # 根据报告类型选择生成方法
+                        if report_type == ReportType.FULL:
+                            # 完整报告：使用决策仪表盘格式
+                            single_report = self.notifier.generate_dashboard_report([result])
+                            logger.info(f"[{code}] 使用完整报告格式")
+                        else:
+                            # 精简报告：使用单股报告格式（默认）
+                            single_report = self.notifier.generate_single_stock_report(result)
+                            logger.info(f"[{code}] 使用精简报告格式")
+
                         if self.notifier.send(single_report):
                             logger.info(f"[{code}] 单股推送成功")
                         else:
                             logger.warning(f"[{code}] 单股推送失败")
                     except Exception as e:
                         logger.error(f"[{code}] 单股推送异常: {e}")
-            
+
             return result
-            
+
         except Exception as e:
             # 捕获所有异常，确保单股失败不影响整体
             logger.exception(f"[{code}] 处理过程发生未知异常: {e}")
             return None
     
     def run(
-        self, 
+        self,
         stock_codes: Optional[List[str]] = None,
         dry_run: bool = False,
-        send_notification: bool = True
+        send_notification: bool = True,
+        report_type: ReportType = ReportType.SIMPLE
     ) -> List[AnalysisResult]:
         """
         运行完整的分析流程
-        
+
         流程：
         1. 获取待分析的股票列表
         2. 使用线程池并发处理
         3. 收集分析结果
         4. 发送通知
-        
+
         Args:
             stock_codes: 股票代码列表（可选，默认使用配置中的自选股）
             dry_run: 是否仅获取数据不分析
             send_notification: 是否发送推送通知
-            
+            report_type: 报告类型（SIMPLE=精简, FULL=完整）
+
         Returns:
             分析结果列表
         """
         start_time = time.time()
-        
+
         # 使用配置中的股票列表
         if stock_codes is None:
             self.config.refresh_stock_list()
             stock_codes = self.config.stock_list
-        
+
         if not stock_codes:
             logger.error("未配置自选股列表，请在 .env 文件中设置 STOCK_LIST")
             return []
-        
+
         logger.info(f"===== 开始分析 {len(stock_codes)} 只股票 =====")
         logger.info(f"股票列表: {', '.join(stock_codes)}")
         logger.info(f"并发数: {self.max_workers}, 模式: {'仅获取数据' if dry_run else '完整分析'}")
-        
+        logger.info(f"报告类型: {report_type.display_name}")
+
         # 单股推送模式（#55）：从配置读取
         single_stock_notify = getattr(self.config, 'single_stock_notify', False)
         if single_stock_notify:
             logger.info("已启用单股推送模式：每分析完一只股票立即推送")
-        
+
         results: List[AnalysisResult] = []
-        
+
         # 使用线程池并发处理
         # 注意：max_workers 设置较低（默认3）以避免触发反爬
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # 提交任务
             future_to_code = {
                 executor.submit(
-                    self.process_single_stock, 
-                    code, 
+                    self.process_single_stock,
+                    code,
                     skip_analysis=dry_run,
-                    single_stock_notify=single_stock_notify and send_notification
+                    single_stock_notify=single_stock_notify and send_notification,
+                    report_type=report_type
                 ): code
                 for code in stock_codes
             }
-            
+
             # 收集结果
             for future in as_completed(future_to_code):
                 code = future_to_code[future]
@@ -614,10 +630,10 @@ class StockAnalysisPipeline:
                         results.append(result)
                 except Exception as e:
                     logger.error(f"[{code}] 任务执行失败: {e}")
-        
+
         # 统计
         elapsed_time = time.time() - start_time
-        
+
         # dry-run 模式下，数据获取成功即视为成功
         if dry_run:
             # 检查哪些股票的数据今天已存在
@@ -626,10 +642,10 @@ class StockAnalysisPipeline:
         else:
             success_count = len(results)
             fail_count = len(stock_codes) - success_count
-        
+
         logger.info(f"===== 分析完成 =====")
         logger.info(f"成功: {success_count}, 失败: {fail_count}, 耗时: {elapsed_time:.2f} 秒")
-        
+
         # 发送通知（单股推送模式下跳过汇总推送，避免重复）
         if results and send_notification and not dry_run:
             if single_stock_notify:
@@ -638,7 +654,7 @@ class StockAnalysisPipeline:
                 self._send_notifications(results, skip_push=True)
             else:
                 self._send_notifications(results)
-        
+
         return results
     
     def _send_notifications(self, results: List[AnalysisResult], skip_push: bool = False) -> None:
@@ -712,7 +728,7 @@ def parse_arguments() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 示例:
-  python main.py                    # 正常运行
+  python main.py                    # 正常运行（精简报告）
   python main.py --debug            # 调试模式
   python main.py --dry-run          # 仅获取数据，不进行 AI 分析
   python main.py --stocks 600519,000001  # 指定分析特定股票
@@ -722,6 +738,7 @@ def parse_arguments() -> argparse.Namespace:
   python main.py --market-review    # 仅运行大盘复盘
   python main.py --webui            # 启动 WebUI 并执行分析
   python main.py --webui-only       # 仅启动 WebUI 服务，不自动执行分析
+  python main.py --report-type full # 使用完整报告格式
         '''
     )
     
@@ -792,6 +809,14 @@ def parse_arguments() -> argparse.Namespace:
         help='仅启动 WebUI 服务，不自动执行分析（通过 /analysis API 手动触发）'
     )
 
+    parser.add_argument(
+        '--report-type',
+        type=str,
+        choices=['simple', 'full'],
+        default='simple',
+        help='报告类型：simple=精简报告（默认）, full=完整报告（决策仪表盘格式）'
+    )
+
     return parser.parse_args()
 
 
@@ -854,25 +879,29 @@ def run_full_analysis(
 ):
     """
     执行完整的分析流程（个股 + 大盘复盘）
-    
+
     这是定时任务调用的主函数
     """
     try:
         # 命令行参数 --single-notify 覆盖配置（#55）
         if getattr(args, 'single_notify', False):
             config.single_stock_notify = True
-        
+
+        # 解析报告类型
+        report_type = ReportType.from_str(getattr(args, 'report_type', 'simple'))
+
         # 创建调度器
         pipeline = StockAnalysisPipeline(
             config=config,
             max_workers=args.workers
         )
-        
+
         # 1. 运行个股分析
         results = pipeline.run(
             stock_codes=stock_codes,
             dry_run=args.dry_run,
-            send_notification=not args.no_notify
+            send_notification=not args.no_notify,
+            report_type=report_type
         )
         
         # 2. 运行大盘复盘（如果启用且不是仅个股模式）
