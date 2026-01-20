@@ -381,12 +381,13 @@ class DatabaseManager:
         data_source: str = "Unknown"
     ) -> int:
         """
-        保存日线数据到数据库
+        保存日线数据到数据库（优化版 - 解决N+1查询问题）
 
         特性：
         1. 自动去重（同一天只保留最新数据）
         2. 自动计算时间戳
         3. 支持增量更新
+        4. 批量查询优化（一次性查询所有已有记录）
 
         Args:
             df: 包含技术指标的标准 DataFrame
@@ -402,79 +403,99 @@ class DatabaseManager:
         saved_count = 0
 
         with self.get_session() as session:
-            for _, row in df.iterrows():
-                try:
-                    # 检查是否已存在
-                    existing = session.execute(
-                        select(StockDaily).where(
-                            and_(
-                                StockDaily.code == code,
-                                StockDaily.date == row['date']
-                            )
+            try:
+                # === 优化：批量查询所有已有记录（解决N+1查询问题）===
+                # 提取所有日期
+                dates_to_check = df['date'].tolist()
+
+                # 一次性查询所有可能存在的记录
+                existing_records = session.execute(
+                    select(StockDaily).where(
+                        and_(
+                            StockDaily.code == code,
+                            StockDaily.date.in_(dates_to_check)
                         )
-                    ).scalar_one_or_none()
+                    )
+                ).scalars().all()
 
-                    if existing:
-                        # 更新现有记录
-                        existing.open = row.get('open')
-                        existing.high = row.get('high')
-                        existing.low = row.get('low')
-                        existing.close = row.get('close')
-                        existing.volume = row.get('volume')
-                        existing.amount = row.get('amount')
-                        existing.pct_chg = row.get('pct_chg')
-                        existing.ma5 = row.get('ma5')
-                        existing.ma10 = row.get('ma10')
-                        existing.ma20 = row.get('ma20')
-                        existing.volume_ratio = row.get('volume_ratio')
+                # 构建字典用于快速查找：(code, date) -> StockDaily
+                existing_map = {(record.code, record.date): record for record in existing_records}
 
-                        # 新增指标
-                        existing.macd = row.get('macd')
-                        existing.macd_signal = row.get('macd_signal')
-                        existing.macd_hist = row.get('macd_hist')
-                        existing.rsi = row.get('rsi')
-                        existing.atr = row.get('atr')
+                logger.debug(f"[批量保存] {code}: 已有记录 {len(existing_map)} 条，待保存 {len(df)} 条")
 
-                        existing.data_source = data_source
-                        existing.updated_at = datetime.now()
-                    else:
-                        # 插入新记录
-                        record = StockDaily(
-                            code=code,
-                            date=row['date'],
-                            open=row.get('open'),
-                            high=row.get('high'),
-                            low=row.get('low'),
-                            close=row.get('close'),
-                            volume=row.get('volume'),
-                            amount=row.get('amount'),
-                            pct_chg=row.get('pct_chg'),
-                            ma5=row.get('ma5'),
-                            ma10=row.get('ma10'),
-                            ma20=row.get('ma20'),
-                            volume_ratio=row.get('volume_ratio'),
+                # 处理每一行数据
+                for _, row in df.iterrows():
+                    try:
+                        record_key = (code, row['date'])
+
+                        if record_key in existing_map:
+                            # === 更新现有记录 ===
+                            existing = existing_map[record_key]
+                            existing.open = row.get('open')
+                            existing.high = row.get('high')
+                            existing.low = row.get('low')
+                            existing.close = row.get('close')
+                            existing.volume = row.get('volume')
+                            existing.amount = row.get('amount')
+                            existing.pct_chg = row.get('pct_chg')
+                            existing.ma5 = row.get('ma5')
+                            existing.ma10 = row.get('ma10')
+                            existing.ma20 = row.get('ma20')
+                            existing.volume_ratio = row.get('volume_ratio')
+
                             # 新增指标
-                            macd=row.get('macd'),
-                            macd_signal=row.get('macd_signal'),
-                            macd_hist=row.get('macd_hist'),
-                            rsi=row.get('rsi'),
-                            atr=row.get('atr'),
-                            data_source=data_source
-                        )
-                        session.add(record)
+                            existing.macd = row.get('macd')
+                            existing.macd_signal = row.get('macd_signal')
+                            existing.macd_hist = row.get('macd_hist')
+                            existing.rsi = row.get('rsi')
+                            existing.atr = row.get('atr')
 
-                    saved_count += 1
+                            existing.data_source = data_source
+                            existing.updated_at = datetime.now()
+                        else:
+                            # === 插入新记录 ===
+                            record = StockDaily(
+                                code=code,
+                                date=row['date'],
+                                open=row.get('open'),
+                                high=row.get('high'),
+                                low=row.get('low'),
+                                close=row.get('close'),
+                                volume=row.get('volume'),
+                                amount=row.get('amount'),
+                                pct_chg=row.get('pct_chg'),
+                                ma5=row.get('ma5'),
+                                ma10=row.get('ma10'),
+                                ma20=row.get('ma20'),
+                                volume_ratio=row.get('volume_ratio'),
+                                # 新增指标
+                                macd=row.get('macd'),
+                                macd_signal=row.get('macd_signal'),
+                                macd_hist=row.get('macd_hist'),
+                                rsi=row.get('rsi'),
+                                atr=row.get('atr'),
+                                data_source=data_source
+                            )
+                            session.add(record)
 
-                except IntegrityError:
-                    # 唯一约束冲突，跳过
-                    session.rollback()
-                    continue
-                except Exception as e:
-                    logger.error(f"保存数据失败: {e}")
-                    session.rollback()
-                    continue
+                        saved_count += 1
 
-            session.commit()
+                    except IntegrityError:
+                        # 唯一约束冲突，跳过
+                        session.rollback()
+                        continue
+                    except Exception as e:
+                        logger.error(f"保存单条数据失败: {e}")
+                        session.rollback()
+                        continue
+
+                session.commit()
+                logger.debug(f"[批量保存] {code}: 成功保存 {saved_count} 条数据")
+
+            except Exception as e:
+                logger.error(f"批量保存失败: {e}")
+                session.rollback()
+                return 0
 
         return saved_count
 

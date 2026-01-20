@@ -25,6 +25,8 @@ from tenacity import (
 )
 
 from config import get_config
+from validators import PromptSanitizer, filter_sensitive_log
+from exceptions import AIAnalysisError, AIModelUnavailableError, AIPromptError, wrap_error
 
 logger = logging.getLogger(__name__)
 
@@ -1056,13 +1058,23 @@ class GeminiAnalyzer:
 - 价格较昨日变化：{context.get('price_change_ratio', 'N/A')}%
 """
         
-        # 添加新闻搜索结果（重点区域）
+        # 添加新闻搜索结果（重点区域）- 应用Prompt清洗防止注入
         prompt += """
 ---
 
 ## 📰 舆情情报
 """
         if news_context:
+            # 清洗新闻内容，防止Prompt注入
+            try:
+                safe_news = PromptSanitizer.validate_and_sanitize(
+                    news_context,
+                    field_name="新闻内容"
+                )
+            except Exception as e:
+                logger.warning(f"新闻内容清洗失败，使用原始内容: {e}")
+                safe_news = news_context[:2000]  # 截断到2000字符
+
             prompt += f"""
 以下是 **{stock_name}({code})** 近7日的新闻搜索结果，请重点提取：
 1. 🚨 **风险警报**：减持、处罚、利空
@@ -1070,7 +1082,7 @@ class GeminiAnalyzer:
 3. 📊 **业绩预期**：年报预告、业绩快报
 
 ```
-{news_context}
+{safe_news}
 ```
 """
         else:

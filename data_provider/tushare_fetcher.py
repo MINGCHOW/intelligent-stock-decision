@@ -12,10 +12,12 @@ TushareFetcher - 备用数据源 1 (Priority 2)
 1. 实现"每分钟调用计数器"
 2. 超过免费配额（80次/分）时，强制休眠到下一分钟
 3. 使用 tenacity 实现指数退避重试
+4. 线程安全的计数器（使用 threading.Lock）
 """
 
 import logging
 import time
+import threading
 from datetime import datetime
 from typing import Optional, Tuple
 
@@ -57,7 +59,7 @@ class TushareFetcher(BaseFetcher):
     def __init__(self, rate_limit_per_minute: int = 80):
         """
         初始化 TushareFetcher
-        
+
         Args:
             rate_limit_per_minute: 每分钟最大请求数（默认80，Tushare免费配额）
         """
@@ -65,7 +67,10 @@ class TushareFetcher(BaseFetcher):
         self._call_count = 0  # 当前分钟内的调用次数
         self._minute_start: Optional[float] = None  # 当前计数周期开始时间
         self._api: Optional[object] = None  # Tushare API 实例
-        
+
+        # 线程安全锁（保护速率限制计数器）
+        self._rate_limit_lock = threading.Lock()
+
         # 尝试初始化 API
         self._init_api()
     
@@ -98,45 +103,58 @@ class TushareFetcher(BaseFetcher):
     
     def _check_rate_limit(self) -> None:
         """
-        检查并执行速率限制
-        
+        检查并执行速率限制（线程安全版）
+
         流控策略：
         1. 检查是否进入新的一分钟
         2. 如果是，重置计数器
         3. 如果当前分钟调用次数超过限制，强制休眠
+
+        线程安全：使用 threading.Lock 保护计数器
         """
-        current_time = time.time()
-        
-        # 检查是否需要重置计数器（新的一分钟）
-        if self._minute_start is None:
-            self._minute_start = current_time
-            self._call_count = 0
-        elif current_time - self._minute_start >= 60:
-            # 已经过了一分钟，重置计数器
-            self._minute_start = current_time
-            self._call_count = 0
-            logger.debug("速率限制计数器已重置")
-        
-        # 检查是否超过配额
+        # 获取锁，确保线程安全
+        with self._rate_limit_lock:
+            current_time = time.time()
+
+            # 检查是否需要重置计数器（新的一分钟）
+            if self._minute_start is None:
+                self._minute_start = current_time
+                self._call_count = 0
+            elif current_time - self._minute_start >= 60:
+                # 已经过了一分钟，重置计数器
+                self._minute_start = current_time
+                self._call_count = 0
+                logger.debug("速率限制计数器已重置")
+
+            # 检查是否超过配额
+            if self._call_count >= self.rate_limit_per_minute:
+                # 计算需要等待的时间（到下一分钟）
+                elapsed = current_time - self._minute_start
+                sleep_time = max(0, 60 - elapsed) + 1  # +1 秒缓冲
+
+                logger.warning(
+                    f"Tushare 达到速率限制 ({self._call_count}/{self.rate_limit_per_minute} 次/分钟)，"
+                    f"等待 {sleep_time:.1f} 秒..."
+                )
+
+                # 释放锁，让其他线程可以继续（避免死锁）
+                # 注意：这里在sleep期间释放锁，允许其他线程检查
+                # 但由于我们在锁内检查了条件，其他线程也会等待
+                pass
+
+        # 在锁外sleep，避免持有锁等待
         if self._call_count >= self.rate_limit_per_minute:
-            # 计算需要等待的时间（到下一分钟）
-            elapsed = current_time - self._minute_start
-            sleep_time = max(0, 60 - elapsed) + 1  # +1 秒缓冲
-            
-            logger.warning(
-                f"Tushare 达到速率限制 ({self._call_count}/{self.rate_limit_per_minute} 次/分钟)，"
-                f"等待 {sleep_time:.1f} 秒..."
-            )
-            
             time.sleep(sleep_time)
-            
-            # 重置计数器
-            self._minute_start = time.time()
-            self._call_count = 0
-        
-        # 增加调用计数
-        self._call_count += 1
-        logger.debug(f"Tushare 当前分钟调用次数: {self._call_count}/{self.rate_limit_per_minute}")
+
+            # 重新获取锁来重置计数器
+            with self._rate_limit_lock:
+                self._minute_start = time.time()
+                self._call_count = 0
+
+        # 增加调用计数（需要锁保护）
+        with self._rate_limit_lock:
+            self._call_count += 1
+            logger.debug(f"Tushare 当前分钟调用次数: {self._call_count}/{self.rate_limit_per_minute}")
     
     def _convert_stock_code(self, stock_code: str) -> str:
         """

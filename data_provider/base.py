@@ -424,6 +424,138 @@ class DataFetcherManager:
         return None, None
 
 
+# ==================== 股票代码转换工具函数 ====================
+
+def convert_stock_code_for_tushare(stock_code: str) -> str:
+    """
+    转换股票代码为 Tushare 格式
+
+    Tushare 要求的格式：
+    - 沪市：600519.SH
+    - 深市：000001.SZ
+
+    Args:
+        stock_code: 原始代码，如 '600519', '000001'
+
+    Returns:
+        Tushare 格式代码，如 '600519.SH', '000001.SZ'
+    """
+    code = stock_code.strip()
+
+    # 已经包含后缀的情况
+    if '.' in code:
+        return code.upper()
+
+    # 根据代码前缀判断市场
+    # 沪市：600xxx, 601xxx, 603xxx, 688xxx (科创板)
+    # 深市：000xxx, 002xxx, 300xxx (创业板)
+    if code.startswith(('600', '601', '603', '688')):
+        return f"{code}.SH"
+    elif code.startswith(('000', '002', '300')):
+        return f"{code}.SZ"
+    else:
+        # 默认尝试深市
+        logger.warning(f"无法确定股票 {code} 的市场，默认使用深市")
+        return f"{code}.SZ"
+
+
+def convert_stock_code_for_baostock(stock_code: str) -> str:
+    """
+    转换股票代码为 Baostock 格式
+
+    Baostock 要求的格式：
+    - 沪市：sh.600519
+    - 深市：sz.000001
+
+    Args:
+        stock_code: 原始代码，如 '600519', '000001'
+
+    Returns:
+        Baostock 格式代码，如 'sh.600519', 'sz.000001'
+    """
+    code = stock_code.strip()
+
+    # 已经包含前缀的情况
+    if code.startswith(('sh.', 'sz.')):
+        return code.lower()
+
+    # 去除可能的后缀
+    code = code.replace('.SH', '').replace('.SZ', '').replace('.sh', '').replace('.sz', '')
+
+    # 根据代码前缀判断市场
+    if code.startswith(('600', '601', '603', '688')):
+        return f"sh.{code}"
+    elif code.startswith(('000', '002', '300')):
+        return f"sz.{code}"
+    else:
+        logger.warning(f"无法确定股票 {code} 的市场，默认使用深市")
+        return f"sz.{code}"
+
+
+def convert_stock_code_for_yfinance(stock_code: str) -> str:
+    """
+    转换股票代码为 Yahoo Finance 格式
+
+    Yahoo Finance A 股代码格式：
+    - 沪市：600519.SS (Shanghai Stock Exchange)
+    - 深市：000001.SZ (Shenzhen Stock Exchange)
+
+    Args:
+        stock_code: 原始代码，如 '600519', '000001'
+
+    Returns:
+        Yahoo Finance 格式代码，如 '600519.SS', '000001.SZ'
+    """
+    code = stock_code.strip()
+
+    # 已经包含后缀的情况
+    if '.SS' in code.upper() or '.SZ' in code.upper():
+        return code.upper()
+
+    # 去除可能的后缀
+    code = code.replace('.SH', '').replace('.sh', '')
+
+    # 根据代码前缀判断市场
+    if code.startswith(('600', '601', '603', '688')):
+        return f"{code}.SS"
+    elif code.startswith(('000', '002', '300')):
+        return f"{code}.SZ"
+    else:
+        logger.warning(f"无法确定股票 {code} 的市场，默认使用深市")
+        return f"{code}.SZ"
+
+
+def get_stock_market(stock_code: str) -> str:
+    """
+    获取股票所属市场
+
+    Args:
+        stock_code: 股票代码
+
+    Returns:
+        市场标识：'SH'（沪市）、'SZ'（深市）、'HK'（港股）
+    """
+    code = stock_code.strip()
+
+    # 港股判断
+    if '.HK' in code.upper() or code.upper().startswith('HK'):
+        return 'HK'
+
+    # 去除后缀
+    code = code.replace('.SH', '').replace('.SZ', '').replace('.sh', '').replace('.sz', '')
+    code = code.replace('.SS', '').replace('.HK', '').replace('.ss', '').replace('.hk', '')
+
+    # A股根据前缀判断
+    if code.startswith(('600', '601', '603', '688')):
+        return 'SH'
+    elif code.startswith(('000', '002', '300')):
+        return 'SZ'
+    else:
+        # 默认沪市
+        logger.warning(f"无法判断 {stock_code} 的市场，默认为沪市")
+        return 'SH'
+
+
 if __name__ == "__main__":
     # 测试代码
     logging.basicConfig(
