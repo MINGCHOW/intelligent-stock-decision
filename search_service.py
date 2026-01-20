@@ -175,17 +175,43 @@ class BaseSearchProvider(ABC):
 class TavilySearchProvider(BaseSearchProvider):
     """
     Tavily 搜索引擎
-    
+
     特点：
     - 专为 AI/LLM 优化的搜索 API
     - 免费版每月 1000 次请求
     - 返回结构化的搜索结果
-    
+
     文档：https://docs.tavily.com/
     """
-    
+
     def __init__(self, api_keys: List[str]):
         super().__init__(api_keys, "Tavily")
+
+        # ✅ API Key 格式验证
+        valid_keys = []
+        for key in api_keys:
+            if key and key.startswith('tvly-'):
+                valid_keys.append(key)
+                logger.info(f"✅ Tavily API Key 格式正确: {key[:8]}...")
+            else:
+                logger.warning(
+                    f"⚠️ Tavily API Key 格式异常: {key[:4] if key else '(empty)'}... "
+                    f"(应以 'tvly-' 开头，已跳过)"
+                )
+
+        # 更新为验证后的 key 列表
+        if valid_keys:
+            self._api_keys = valid_keys
+            self._key_cycle = cycle(valid_keys)
+            self._key_usage = {key: 0 for key in valid_keys}
+            self._key_errors = {key: 0 for key in valid_keys}
+            logger.info(f"✅ Tavily 初始化成功，共 {len(valid_keys)} 个有效 Key")
+        else:
+            self._api_keys = []
+            self._key_cycle = None
+            self._key_usage = {}
+            self._key_errors = {}
+            logger.error("❌ Tavily 没有有效的 API Key，搜索功能将不可用")
     
     def _do_search(self, query: str, api_key: str, max_results: int) -> SearchResponse:
         """执行 Tavily 搜索"""
@@ -234,13 +260,27 @@ class TavilySearchProvider(BaseSearchProvider):
                 provider=self.name,
                 success=True,
             )
-            
+
         except Exception as e:
             error_msg = str(e)
-            # 检查是否是配额问题
-            if 'rate limit' in error_msg.lower() or 'quota' in error_msg.lower():
-                error_msg = f"API 配额已用尽: {error_msg}"
-            
+
+            # ✅ 详细的错误分析
+            if "Unauthorized" in error_msg or "401" in error_msg:
+                error_detail = (
+                    f"API Key 认证失败 (Key: {api_key[:8]}...)。"
+                    f"请检查：1) Key 是否正确；2) 是否在 Tavily 控制台启用了'自由研究员'计划"
+                )
+                logger.error(f"❌ [Tavily] {error_detail}")
+            elif "429" in error_msg or "quota" in error_msg.lower() or "rate limit" in error_msg.lower():
+                error_detail = (
+                    f"API 配额已用完。当前为'自由研究员'计划（1000积分/月），"
+                    f"建议升级到'按需付费'计划或减少搜索频率"
+                )
+                logger.error(f"⚠️ [Tavily] {error_detail}")
+                error_msg = error_detail
+            else:
+                logger.error(f"❌ [Tavily] 搜索失败: {e}")
+
             return SearchResponse(
                 query=query,
                 results=[],
@@ -322,9 +362,26 @@ class SerpAPISearchProvider(BaseSearchProvider):
                 provider=self.name,
                 success=True,
             )
-            
+
         except Exception as e:
             error_msg = str(e)
+
+            # ✅ 详细的错误分析
+            if "Unauthorized" in error_msg or "401" in error_msg:
+                error_detail = (
+                    f"API Key 认证失败 (Key: {api_key[:8]}...)。"
+                    f"请检查：1) Key 是否正确；2) 是否在 Tavily 控制台启用了'自由研究员'计划"
+                )
+                logger.error(f"❌ [Tavily] {error_detail}")
+            elif "429" in error_msg or "quota" in error_msg.lower():
+                error_detail = (
+                    f"API 配额已用完。当前为'自由研究员'计划（1000积分/月），"
+                    f"建议升级到'按需付费'计划或减少搜索频率"
+                )
+                logger.error(f"⚠️ [Tavily] {error_detail}")
+            else:
+                logger.error(f"❌ [Tavily] 搜索失败: {e}")
+
             return SearchResponse(
                 query=query,
                 results=[],
