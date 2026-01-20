@@ -27,6 +27,7 @@ from tenacity import (
 from config import get_config
 from validators import PromptSanitizer, filter_sensitive_log
 from exceptions import AIAnalysisError, AIModelUnavailableError, AIPromptError, wrap_error
+from technical_indicators import TechnicalIndicatorInterpreter
 
 logger = logging.getLogger(__name__)
 
@@ -1048,7 +1049,69 @@ class GeminiAnalyzer:
 **风险因素**：
 {chr(10).join('- ' + r for r in trend.get('risk_factors', ['无'])) if trend.get('risk_factors') else '- 无'}
 """
-        
+
+        # ========== 技术指标解读（新增）==========
+        interpreter = TechnicalIndicatorInterpreter()
+
+        # 检查是否有技术指标数据
+        has_indicators = any(k in today for k in ['macd', 'macd_signal', 'macd_hist', 'rsi', 'atr'])
+
+        if has_indicators:
+            prompt += """
+---
+
+### 📊 技术指标智能解读
+
+"""
+            # MACD 解读
+            if 'macd' in today and 'macd_signal' in today and 'macd_hist' in today:
+                try:
+                    macd_signal = interpreter.interpret_macd(
+                        dif=float(today.get('macd', 0)),
+                        dea=float(today.get('macd_signal', 0)),
+                        bar=float(today.get('macd_hist', 0))
+                    )
+                    prompt += f"""
+#### MACD 指标
+**信号**：{macd_signal.emoji} **{macd_signal.signal}** ({macd_signal.level})
+**状态**：{macd_signal.status}
+**操作建议**：{macd_signal.advice}
+**原因**：{macd_signal.reason}
+"""
+                except Exception as e:
+                    logger.debug(f"MACD 解读失败: {e}")
+
+            # RSI 解读
+            if 'rsi' in today:
+                try:
+                    rsi_signal = interpreter.interpret_rsi(float(today['rsi']))
+                    prompt += f"""
+#### RSI 指标
+**信号**：{rsi_signal.emoji} **{rsi_signal.signal}** ({rsi_signal.level})
+**状态**：{rsi_signal.status}
+**操作建议**：{rsi_signal.advice}
+**原因**：{rsi_signal.reason}
+"""
+                except Exception as e:
+                    logger.debug(f"RSI 解读失败: {e}")
+
+            # ATR 解读
+            if 'atr' in today and 'close' in today:
+                try:
+                    atr_signal = interpreter.interpret_atr(
+                        atr_value=float(today['atr']),
+                        price=float(today['close'])
+                    )
+                    prompt += f"""
+#### ATR 波动率
+**信号**：{atr_signal.emoji} **{atr_signal.signal}** ({atr_signal.level})
+**状态**：{atr_signal.status}
+**活跃度**：{atr_signal.advice}
+**原因**：{atr_signal.reason}
+"""
+                except Exception as e:
+                    logger.debug(f"ATR 解读失败: {e}")
+
         # 添加昨日对比数据
         if 'yesterday' in context:
             volume_change = context.get('volume_change_ratio', 'N/A')

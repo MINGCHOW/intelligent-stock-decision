@@ -899,7 +899,7 @@ class NotificationService:
         lines.extend([
             "---",
             "*AI生成，仅供参考，不构成投资建议*",
-            f"*详细报告见 reports/report_{report_date.replace('-', '')}.md*"
+            f"*详细报告见 reports/stock_analysis_dashboard_{report_date.replace('-', '')}.md*"
         ])
         
         content = "\n".join(lines)
@@ -2424,11 +2424,12 @@ class NotificationService:
             保存的文件路径
         """
         from pathlib import Path
-        
+
         if filename is None:
             date_str = datetime.now().strftime('%Y%m%d')
-            filename = f"report_{date_str}.md"
-        
+            # 使用语义化的英文命名：stock_analysis_dashboard_YYYYMMDD.md
+            filename = f"stock_analysis_dashboard_{date_str}.md"
+
         # 确保 reports 目录存在
         reports_dir = Path(__file__).parent / 'reports'
         reports_dir.mkdir(parents=True, exist_ok=True)

@@ -21,6 +21,7 @@ import pandas as pd
 
 from config import get_config
 from search_service import SearchService
+from utils import get_cache_manager
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +101,7 @@ class MarketAnalyzer:
     def __init__(self, search_service: Optional[SearchService] = None, analyzer=None):
         """
         初始化大盘分析器
-        
+
         Args:
             search_service: 搜索服务实例
             analyzer: AI分析器实例（用于调用LLM）
@@ -108,28 +109,43 @@ class MarketAnalyzer:
         self.config = get_config()
         self.search_service = search_service
         self.analyzer = analyzer
+        self.cache_manager = get_cache_manager()  # ✅ 添加缓存管理器
         
     def get_market_overview(self) -> MarketOverview:
         """
-        获取市场概览数据
-        
+        获取市场概览数据（✅ 集成缓存）
+
         Returns:
             MarketOverview: 市场概览数据对象
         """
         today = datetime.now().strftime('%Y-%m-%d')
+        cache_key = f"market_overview_{today}"
+
+        # ✅ 尝试从缓存获取（TTL: 1小时）
+        cached_overview = self.cache_manager.get(cache_key, ttl=3600)
+        if cached_overview is not None:
+            logger.info(f"[大盘] 使用缓存数据: {today}")
+            return cached_overview
+
+        # 缓存未命中，获取新数据
+        logger.info(f"[大盘] 缓存未命中，获取新数据: {today}")
         overview = MarketOverview(date=today)
-        
+
         # 1. 获取主要指数行情
         overview.indices = self._get_main_indices()
-        
+
         # 2. 获取涨跌统计
         self._get_market_statistics(overview)
-        
+
         # 3. 获取板块涨跌榜
         self._get_sector_rankings(overview)
 
         # 4. 获取北向资金（✅ 已实现）
         self._get_north_flow(overview)
+
+        # ✅ 保存到缓存
+        self.cache_manager.set(cache_key, overview, ttl=3600)
+        logger.info(f"[大盘] 数据已缓存: {today}")
 
         return overview
 

@@ -375,11 +375,12 @@ class DataFetcherManager:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         days: int = 30
-    ) -> Tuple[Optional[pd.DataFrame], str]:
+    ) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
         """
-        获取日线数据（自动故障切换）
+        获取日线数据（自动故障切换 + 详细错误聚合）
 
         尝试所有数据源，直到成功或全部失败
+        失败时聚合所有数据源的详细错误信息
 
         Args:
             stock_code: 股票代码
@@ -388,9 +389,10 @@ class DataFetcherManager:
             days: 获取天数（当 start_date 未指定时使用）
 
         Returns:
-            (DataFrame, 数据源名称) 或 (None, None)
+            (DataFrame, 数据源名称) 或 (None, 详细错误信息)
         """
         last_error = None
+        error_details = []  # ✅ 聚合所有失败原因
 
         for fetcher in self.fetchers:
             try:
@@ -407,21 +409,27 @@ class DataFetcherManager:
                     logger.info(f"✅ {fetcher.name} 获取成功")
                     return df, fetcher.name
                 else:
-                    logger.warning(f"⚠️ {fetcher.name} 返回空数据")
+                    error_msg = f"返回空数据"
+                    error_details.append(f"  - {fetcher.name}: {error_msg}")
+                    logger.warning(f"⚠️ {fetcher.name}: {error_msg}")
 
             except DataFetchError as e:
-                logger.warning(f"⚠️ {fetcher.name} 获取失败: {e}")
+                error_msg = str(e)
+                error_details.append(f"  - {fetcher.name}: {error_msg}")
+                logger.warning(f"⚠️ {fetcher.name}: {error_msg}")
                 last_error = e
                 continue
             except Exception as e:
-                logger.error(f"❌ {fetcher.name} 发生异常: {e}")
+                error_msg = f"{type(e).__name__}: {str(e)}"
+                error_details.append(f"  - {fetcher.name}: {error_msg}")
+                logger.error(f"❌ {fetcher.name}: {error_msg}")
                 last_error = e
                 continue
 
-        # 所有数据源都失败
-        error_msg = f"所有数据源获取失败，最后错误: {last_error}"
-        logger.error(error_msg)
-        return None, None
+        # ✅ 所有数据源都失败，返回详细的错误信息
+        full_error_msg = f"所有数据源获取失败 ({stock_code}):\n" + "\n".join(error_details)
+        logger.error(full_error_msg)
+        return None, full_error_msg
 
 
 # ==================== 股票代码转换工具函数 ====================
