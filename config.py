@@ -18,8 +18,8 @@ class Config:
 
     # AI 配置
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.0-flash-exp"
-    gemini_model_fallback: str = "gemini-1.5-flash"  # 修复：移除错误的 -002 后缀
+    gemini_model: str = "gemini-3-flash-preview"  # 最新 Gemini 3 Flash 预览版
+    gemini_model_fallback: str = "gemini-2.5-flash"  # 备用：Gemini 2.5 Flash
     gemini_max_retries: int = 5
     gemini_retry_delay: float = 5.0
     gemini_request_delay: float = 2.0
