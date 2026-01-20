@@ -19,7 +19,7 @@ class Config:
     # AI 配置
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.0-flash-exp"
-    gemini_model_fallback: str = "gemini-1.5-flash-002"
+    gemini_model_fallback: str = "gemini-1.5-flash"  # 修复：移除错误的 -002 后缀
     gemini_max_retries: int = 5
     gemini_retry_delay: float = 5.0
     gemini_request_delay: float = 2.0
@@ -46,6 +46,11 @@ class Config:
     email_password: str = ""
     email_receivers: str = ""
     custom_webhook_urls: str = ""
+
+    # 飞书文档 API（用于生成富文本文档）
+    feishu_app_id: str = ""
+    feishu_app_secret: str = ""
+    feishu_folder_token: str = ""  # 飞书文件夹 token，用于存放生成的文档
 
     # 自选股
     stock_list: List[str] = None
@@ -103,6 +108,10 @@ def get_config() -> Config:
 
         _config_instance.wechat_webhook_url = os.getenv("WECHAT_WEBHOOK_URL", "")
         _config_instance.feishu_webhook_url = os.getenv("FEISHU_WEBHOOK_URL", "")
+        # 飞书文档 API 配置（用于生成富文本文档）
+        _config_instance.feishu_app_id = os.getenv("FEISHU_APP_ID", "")
+        _config_instance.feishu_app_secret = os.getenv("FEISHU_APP_SECRET", "")
+        _config_instance.feishu_folder_token = os.getenv("FEISHU_FOLDER_TOKEN", "")
         _config_instance.telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
         _config_instance.telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
         _config_instance.email_sender = os.getenv("EMAIL_SENDER", "")
