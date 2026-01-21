@@ -53,6 +53,8 @@ jobs:
           python -m py_compile storage.py scheduler.py search_service.py
           python -m py_compile market_analyzer.py stock_analyzer.py
           python -m py_compile data_provider/*.py
+          python -m py_compile technical_indicators.py report_formatter.py
+          python -m py_compile utils/*.py
           echo "✅ Python 语法检查通过"
       
       - name: 🔎 静态分析 (严重错误)
@@ -67,6 +69,9 @@ jobs:
           python -c "from notification import NotificationService; print('✅ notification')"
           python -c "from data_provider import DataFetcherManager; print('✅ data_provider')"
           python -c "from analyzer import GeminiAnalyzer; print('✅ analyzer')"
+          python -c "from technical_indicators import TechnicalIndicatorInterpreter; print('✅ technical_indicators')"
+          python -c "from report_formatter import ReportFormatter; print('✅ report_formatter')"
+          python -c "from utils import get_cache_manager; print('✅ utils.cache_manager')"
           echo "✅ 所有模块导入成功"
 
   # ==================== Docker 构建测试 ====================
