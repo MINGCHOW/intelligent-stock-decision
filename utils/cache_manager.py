@@ -191,8 +191,8 @@ class CacheManager:
 
         使用 hash 后的 key 作为文件名，避免文件名过长或包含特殊字符
         """
-        # 使用 MD5 hash 生成文件名
-        key_hash = hashlib.md5(key.encode()).hexdigest()
+        # 使用 MD5 hash 生成文件名（非加密用途）
+        key_hash = hashlib.md5(key.encode(), usedforsecurity=False).hexdigest()
         return self.cache_dir / f"{key_hash}.cache"
 
     def _cleanup_if_needed(self):

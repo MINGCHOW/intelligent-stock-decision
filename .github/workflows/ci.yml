@@ -93,8 +93,9 @@ jobs:
 
       - name: 🔒 安全扫描 (Bandit)
         run: |
-          bandit -r . -f json -o bandit-report.json || true
-          bandit -r . -f txt
+          # 排除测试文件和 CI 脚本（使用 glob 模式）
+          bandit -r . -x "**/tests/**,**/.github/**,**/venv/**,**/env/**" -f json -o bandit-report.json || true
+          bandit -r . -x "**/tests/**,**/.github/**,**/venv/**,**/env/**" -f txt
 
       - name: 🛡️ 依赖安全检查 (Safety)
         run: |
