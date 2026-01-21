@@ -54,7 +54,17 @@ Thumbs.db
 # Temporary files
 tmp*
 *.tmp
+tmpclaude-*
 nul
+
+# Test coverage
+.coverage
+coverage.xml
+*.cover
+
+# Reports
+reports/*.md
+!reports/README.md
 
 # Jupyter Notebook
 .ipynb_checkpoints
