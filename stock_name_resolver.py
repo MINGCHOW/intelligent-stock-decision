@@ -25,6 +25,7 @@ import time
 from typing import Optional, Dict, Set
 from pathlib import Path
 import threading
+import pandas as pd  # 用于 DataFrame 类型注解
 
 logger = logging.getLogger(__name__)
 
