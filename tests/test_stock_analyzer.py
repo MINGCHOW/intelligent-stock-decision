@@ -8,7 +8,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from stock_analyzer import StockTrendAnalyzer, TrendAnalysisResult, TrendStatus, VolumeStatus
+from stock_analyzer import StockTrendAnalyzer, TrendAnalysisResult, TrendStatus, VolumeStatus, BuySignal
 
 
 class TestStockTrendAnalyzer:
@@ -83,15 +83,16 @@ class TestTrendAnalysisResult:
         result = TrendAnalysisResult(code='600519')
 
         assert result.code == '600519'
-        # 验证默认值
-        assert hasattr(result, 'signal')
+        # 验证默认值 - 使用 buy_signal 而不是 signal
+        assert hasattr(result, 'buy_signal')
+        assert result.buy_signal == BuySignal.WAIT
 
     def test_result_fields(self):
         """测试结果字段"""
         result = TrendAnalysisResult(code='600519')
 
-        # 验证关键字段存在
-        required_fields = ['code', 'signal', 'trend_status', 'volume_status']
+        # 验证关键字段存在 - 使用 buy_signal 而不是 signal
+        required_fields = ['code', 'buy_signal', 'trend_status', 'volume_status']
         for field in required_fields:
             assert hasattr(result, field)
 

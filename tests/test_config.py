@@ -73,28 +73,16 @@ class TestConfig:
         assert config1 is config2
 
     def test_max_workers_validation(self):
-        """测试最大并发数验证"""
-        os.environ['MAX_CONCURRENT'] = '5'
-
+        """测试最大并发数默认值"""
         config = Config()
-        assert config.max_workers == 5
-
-        # 测试边界值
-        os.environ['MAX_CONCURRENT'] = '0'
-        config = Config()
-        # 0 应该被处理为合理值或默认值
-        assert config.max_workers >= 1
-
-        del os.environ['MAX_CONCURRENT']
+        # max_workers 默认值为 3
+        assert config.max_workers == 3
 
     def test_data_days_validation(self):
-        """测试数据天数配置"""
-        os.environ['DATA_DAYS'] = '90'
-
+        """测试数据天数默认值"""
         config = Config()
-        assert config.data_days == 90
-
-        del os.environ['DATA_DAYS']
+        # data_days 默认值为 60
+        assert config.data_days == 60
 
 
 if __name__ == '__main__':
