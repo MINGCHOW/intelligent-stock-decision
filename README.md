@@ -546,12 +546,9 @@ flake8 . --count --select=E9,F63,F7,F82 --show-source
 
 ## ⚠️ Disclaimer
 
-**This software is for educational purposes only and does not constitute investment advice.**
+**For educational purposes only. Not investment advice.**
 
-- Stock market investing carries substantial risk of loss
-- Past performance does not guarantee future results
-- Always conduct your own research and consult licensed financial advisors
-- The authors are not responsible for any financial losses incurred
+Stock market investing carries risk. Past performance does not guarantee future results. Always do your own research and consult licensed advisors.
 
 ---
 
