@@ -905,17 +905,22 @@ _search_service: Optional[SearchService] = None
 def get_search_service() -> SearchService:
     """获取搜索服务单例"""
     global _search_service
-    
+
     if _search_service is None:
         from config import get_config
         config = get_config()
-        
+
+        # ✅ 将逗号分隔的字符串转换为列表
+        bocha_keys_list = [k.strip() for k in config.bocha_api_keys.split(',') if k.strip()] if config.bocha_api_keys else []
+        tavily_keys_list = [k.strip() for k in config.tavily_api_keys.split(',') if k.strip()] if config.tavily_api_keys else []
+        serpapi_keys_list = [k.strip() for k in config.serpapi_keys.split(',') if k.strip()] if config.serpapi_keys else []
+
         _search_service = SearchService(
-            bocha_keys=config.bocha_api_keys,
-            tavily_keys=config.tavily_api_keys,
-            serpapi_keys=config.serpapi_keys,
+            bocha_keys=bocha_keys_list,
+            tavily_keys=tavily_keys_list,
+            serpapi_keys=serpapi_keys_list,
         )
-    
+
     return _search_service
 
 
