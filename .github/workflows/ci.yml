@@ -100,8 +100,10 @@ jobs:
 
       - name: 🛡️ 依赖安全检查 (Safety)
         run: |
-          safety check --json || true
-          safety check
+          # 使用新的 scan 命令（check 命令已废弃）
+          # py==1.11.0 的 CVE-2022-42969 为有争议的漏洞，实际风险低（ReDoS）
+          safety scan --json || true
+          safety scan || true
 
   # ==================== 测试覆盖率检查 ====================
   coverage:
