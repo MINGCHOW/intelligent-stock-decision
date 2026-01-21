@@ -37,6 +37,42 @@ class StockNameResolver:
     _instance = None
     _lock = threading.Lock()
 
+    # 本地股票名称映射（最后的备用方案）
+    _LOCAL_STOCK_NAMES = {
+        # A股常见股票
+        '300537': '易事特',
+        '601958': '金钼股份',
+        '300872': '云鼎科技',
+        '002241': '歌尔股份',
+        '600703': '三安光电',
+
+        # 港股常见股票
+        '01339.hk': '中国海外发展',
+        '01339': '中国海外发展',
+        '00700.hk': '腾讯控股',
+        '00700': '腾讯控股',
+        '02488.hk': '山东黄金',
+        '02488': '山东黄金',
+        '03887.hk': '中船防务',
+        '03887': '中船防务',
+        '03908.hk': '中金公司',
+        '03908': '中金公司',
+        '06060.hk': '京东物流',
+        '06060': '京东物流',
+        '06082.hk': '雅居乐集团',
+        '06082': '雅居乐集团',
+        '06823.hk': '融信中国',
+        '06823': '融信中国',
+        '07618.hk': '中国宏桥',
+        '07618': '中国宏桥',
+        '09660.hk': '康宁医院',
+        '09660': '康宁医院',
+        '09698.hk': '名创优品',
+        '09698': '名创优品',
+        '03069.hk': '青岛控股',
+        '03069': '青岛控股',
+    }
+
     def __new__(cls):
         if cls._instance is None:
             with cls._lock:
@@ -131,7 +167,7 @@ class StockNameResolver:
         """
         从多个数据源查询股票名称
 
-        优先级：Tushare → Akshare → YFinance
+        优先级：Tushare → Akshare → YFinance → 本地映射（备用）
 
         Returns:
             股票名称，失败返回 None
@@ -153,6 +189,40 @@ class StockNameResolver:
             name = self._fetch_from_yfinance(stock_code)
             if name:
                 return name
+
+        # ✅ 最后的备用方案：本地映射
+        name = self._fetch_from_local_mapping(stock_code)
+        if name:
+            logger.info(f"[本地映射] {stock_code} 名称: {name}")
+            return name
+
+        return None
+
+    def _fetch_from_local_mapping(self, stock_code: str) -> Optional[str]:
+        """
+        从本地映射获取股票名称（备用方案）
+
+        当所有在线数据源失败时，使用本地映射作为最后的备用方案。
+
+        Args:
+            stock_code: 股票代码
+
+        Returns:
+            股票名称，失败返回 None
+        """
+        # 尝试精确匹配
+        if stock_code in self._LOCAL_STOCK_NAMES:
+            return self._LOCAL_STOCK_NAMES[stock_code]
+
+        # 尝试小写匹配（港股代码）
+        code_lower = stock_code.lower()
+        if code_lower in self._LOCAL_STOCK_NAMES:
+            return self._LOCAL_STOCK_NAMES[code_lower]
+
+        # 尝试大写匹配
+        code_upper = stock_code.upper()
+        if code_upper in self._LOCAL_STOCK_NAMES:
+            return self._LOCAL_STOCK_NAMES[code_upper]
 
         return None
 

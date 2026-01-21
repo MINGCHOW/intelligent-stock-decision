@@ -218,24 +218,31 @@ def _is_etf_code(stock_code: str) -> bool:
 def _is_hk_code(stock_code: str) -> bool:
     """
     判断代码是否为港股
-    
+
     港股代码规则：
     - 5位数字代码，如 '00700' (腾讯控股)
-    - 部分港股代码可能带有前缀，如 'hk00700', 'hk1810'
-    
+    - 带前缀的代码，如 'hk00700', 'hk1810'
+    - 带后缀的代码，如 '00700.HK', '01339.hk' ⭐ 新增支持
+
     Args:
         stock_code: 股票代码
-        
+
     Returns:
         True 表示是港股代码，False 表示不是港股代码
     """
-    # 去除可能的 'hk' 前缀并检查是否为纯数字
     code = stock_code.lower()
+
+    # ✅ 检查 .hk 后缀格式（如 '01339.hk', '00700.HK'）
+    if code.endswith('.hk'):
+        numeric_part = code[:-3]  # 去掉 '.hk' 后缀
+        return numeric_part.isdigit() and 1 <= len(numeric_part) <= 5
+
+    # 检查 hk 前缀格式（如 'hk00700', 'hk1810'）
     if code.startswith('hk'):
-        # 带 hk 前缀的一定是港股，去掉前缀后应为纯数字（1-5位）
         numeric_part = code[2:]
         return numeric_part.isdigit() and 1 <= len(numeric_part) <= 5
-    # 无前缀时，5位纯数字才视为港股（避免误判 A 股代码）
+
+    # 无前缀无后缀时，5位纯数字才视为港股（避免误判 A 股代码）
     return code.isdigit() and len(code) == 5
 
 
@@ -476,12 +483,23 @@ class AkshareFetcher(BaseFetcher):
         
         # 防封禁策略 1: 随机 User-Agent
         self._set_random_user_agent()
-        
+
         # 防封禁策略 2: 强制休眠
         self._enforce_rate_limit()
-        
-        # 确保代码格式正确（5位数字）
-        code = stock_code.lower().replace('hk', '').zfill(5)
+
+        # ✅ 确保代码格式正确（5位数字）
+        # 处理多种港股代码格式：'00700', '01339.hk', 'hk00700'
+        code = stock_code.lower()
+        if code.endswith('.hk'):
+            # 去掉 .hk 后缀
+            code = code[:-3]
+        elif code.startswith('hk'):
+            # 去掉 hk 前缀
+            code = code[2:]
+
+        # 确保是5位数字（左补零）
+        code = code.replace('.', '').strip()  # 移除可能的残留点号
+        code = code.zfill(5) if code.isdigit() else code
         
         logger.info(f"[API调用] ak.stock_hk_hist(symbol={code}, period=daily, "
                    f"start_date={start_date.replace('-', '')}, end_date={end_date.replace('-', '')}, adjust=qfq)")
@@ -833,9 +851,20 @@ class AkshareFetcher(BaseFetcher):
             # 防封禁策略
             self._set_random_user_agent()
             self._enforce_rate_limit()
-            
-            # 确保代码格式正确（5位数字）
-            code = stock_code.lower().replace('hk', '').zfill(5)
+
+            # ✅ 确保代码格式正确（5位数字）
+            # 处理多种港股代码格式：'00700', '01339.hk', 'hk00700'
+            code = stock_code.lower()
+            if code.endswith('.hk'):
+                # 去掉 .hk 后缀
+                code = code[:-3]
+            elif code.startswith('hk'):
+                # 去掉 hk 前缀
+                code = code[2:]
+
+            # 确保是5位数字（左补零）
+            code = code.replace('.', '').strip()  # 移除可能的残留点号
+            code = code.zfill(5) if code.isdigit() else code
             
             logger.info(f"[API调用] ak.stock_hk_spot_em() 获取港股实时行情...")
             import time as _time

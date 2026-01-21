@@ -280,23 +280,44 @@ class MarketAnalyzer:
         获取北向资金流入
 
         ✅ 已实现：使用 akshare 获取北向资金净流入数据
+        ✅ 支持多个 API 名称（akshare 版本兼容）
         """
         try:
             logger.info("[大盘] 获取北向资金...")
 
-            # ✅ 使用熔断器保护的 API 调用
-            df = self._call_akshare_with_retry(
-                lambda: ak.stock_hsgt_north_net_flow_in_em(symbol="北上"),
-                "北向资金",
-                attempts=3
-            )
+            # ✅ 尝试多个可能的 API 名称（akshare 版本兼容）
+            api_names = [
+                'stock_em_hsgt_north_flow_in_em',  # 最新版本
+                'stock_hsgt_north_flow_in_em',     # 备用版本
+                'stock_hsgt_north_net_flow_in_em',  # 旧版本（可能已废弃）
+            ]
+
+            df = None
+            for api_name in api_names:
+                try:
+                    logger.debug(f"[大盘] 尝试 API: {api_name}")
+                    api_func = getattr(ak, api_name)
+                    df = self._call_akshare_with_retry(
+                        lambda: api_func(symbol="北向资金"),
+                        f"北向资金({api_name})",
+                        attempts=2  # 每个 API 只尝试 2 次
+                    )
+                    if df is not None and not df.empty:
+                        logger.info(f"[大盘] 成功使用 API: {api_name}")
+                        break
+                except AttributeError:
+                    logger.debug(f"[大盘] API 不存在: {api_name}")
+                    continue
+                except Exception as e:
+                    logger.debug(f"[大盘] API 调用失败 ({api_name}): {e}")
+                    continue
 
             if df is not None and not df.empty:
                 # 取最新一条数据
                 latest = df.iloc[-1]
 
                 # 尝试多个可能的列名
-                for col in ['当日净流入', '净流入', 'north_net_flow_in', '流入']:
+                for col in ['当日净流入', '净流入', 'north_net_flow_in', '流入', 'value']:
                     if col in df.columns:
                         try:
                             flow_value = float(latest[col])
@@ -308,6 +329,9 @@ class MarketAnalyzer:
 
                 # 如果没有找到任何列，记录调试信息
                 logger.warning(f"[大盘] 未找到北向资金数据列，可用列: {list(df.columns)}")
+                overview.north_flow = 0.0
+            else:
+                logger.warning("[大盘] 所有北向资金 API 均失败")
                 overview.north_flow = 0.0
 
         except Exception as e:
