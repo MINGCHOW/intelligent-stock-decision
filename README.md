@@ -546,9 +546,7 @@ flake8 . --count --select=E9,F63,F7,F82 --show-source
 
 ## ⚠️ Disclaimer
 
-**For educational purposes only. Not investment advice.**
-
-Stock market investing carries risk. Past performance does not guarantee future results. Always do your own research and consult licensed advisors.
+**Educational purposes only. Not financial advice.**
 
 ---
 
