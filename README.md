@@ -1,251 +1,353 @@
 <div align="center">
 
-  ![CI](https://github.com/MINGCHOW/intelligent-stock-decision/actions/workflows/ci.yml/badge.svg)
-  ![License](https://img.shields.io/badge/license-MIT-green)
-  ![Python](https://img.shields.io/badge/python-3.11+-blue)
+![CI](https://github.com/MINGCHOW/intelligent-stock-decision/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Python](https://img.shields.io/badge/python-3.11+-blue)
+![Last Updated](https://img.shields.io/badge/last%20updated-2026%2F01-brightgreen)
 
-  # Intelligent Stock Decision System
+<h1>🤖 Intelligent Stock Decision System</h1>
 
-  **AI-powered stock analysis with four-layer decision framework**
+**AI-powered stock analysis with four-layer decision framework**  
+*Automated trading insights for A-shares & Hong Kong stocks | Zero costs | Open source*
 
-  [Quick Start](#-quick-start) • [Features](#-features) • [How It Works](#-how-it-works) • [Documentation](#-documentation)
+[🚀 Quick Start](#-quick-start) • [✨ Features](#-features) • [🧠 How It Works](#-how-it-works) • [📚 Documentation](#-documentation)
 
 </div>
 
 ---
 
-## ✨ Features
+## ✨ Core Capabilities
 
-<div align="center">
+<table>
+  <tr>
+    <td align="center"><strong>🧠 AI Analysis</strong><br/>Powered by Gemini 2.0<br/>Understands market trends</td>
+    <td align="center"><strong>📊 Technical Scoring</strong><br/>0-100 points system<br/>MACD, RSI, ATR</td>
+    <td align="center"><strong>🔄 Multi-Source Data</strong><br/>5 data providers<br/>Auto failover</td>
+    <td align="center"><strong>💰 100% Free</strong><br/>GitHub Actions<br/>No servers needed</td>
+  </tr>
+</table>
 
-**Four-Layer Decision Framework** | **Multi-Market Support** | **Zero-Cost Deployment**
-:---:|:---:|:---:
-Trend → Position → Technical → Sentiment | A-shares + Hong Kong stocks | Run on GitHub Actions
+### 🎯 Key Features
 
-</div>
-
-### 🎯 What It Does
-
-- **🧠 AI-Driven Analysis** — Powered by Google Gemini 2.0, understands technical and news sentiment
-- **🔍 Smart Filtering** — Four-layer decision system scores stocks from 0-100 points
-- **📊 Technical Indicators** — MACD, RSI, ATR, Bollinger Bands (pure Python, no complex dependencies)
-- **🔄 Reliable Data** — 5 data sources with automatic failover, never miss market data
-- **📢 Smart Notifications** — Get alerts via WeChat, Feishu, Telegram, or Email
-- **💰 100% Free** — Runs on GitHub Actions, no server costs
+- ✅ **Four-Layer Decision Framework** - Trend → Position → Technical → Sentiment  
+- ✅ **Multi-Market Support** - A-shares (600519) + Hong Kong stocks (00700.HK)  
+- ✅ **Smart Notifications** - WeChat, Feishu, Telegram, Email simultaneous delivery  
+- ✅ **Pure Python** - No heavy dependencies, easy to deploy anywhere  
+- ✅ **Automatic Scheduling** - Runs daily on GitHub Actions (zero management)  
+- ✅ **News Sentiment Analysis** - Real-time market sentiment filtering  
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (3 Minutes)
 
-### Get Started in 3 Minutes (No Coding Required)
+### Step 1️⃣ Fork Repository
+Click the **Fork** button in the top-right corner.
 
-**1. Fork this Repository**
+### Step 2️⃣ Add API Keys
+Navigate to: `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
 
-Click the "Fork" button in the top-right corner.
-
-**2. Add Your API Keys**
-
-Go to: `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
-
+#### Required
 ```bash
-GEMINI_API_KEY=AIzaSy...          # Get free: https://aistudio.google.com/app/apikey
-STOCK_LIST=600519,00700.HK,300750 # Your watchlist (comma-separated)
+GEMINI_API_KEY=AIzaSy...          # Free from https://aistudio.google.com/app/apikey
+STOCK_LIST=600519,00700.HK,300750 # Your watchlist
 ```
 
-**3. Run Your First Analysis**
+#### Optional (Recommended)
+```bash
+TAVILY_API_KEYS=tvly-...                    # News sentiment analysis
+WECHAT_WEBHOOK_URL=https://qyapi.weixin... # WeChat Work notifications
+FEISHU_WEBHOOK_URL=https://open.feishu...  # Feishu group chat
+```
 
-`Actions` → `Daily Stock Analysis` → `Run workflow` → `Run workflow`
+### Step 3️⃣ Run Analysis
+Go to: `Actions` → `Daily Stock Analysis` → `Run workflow` → `Run workflow`
 
-✅ **Done!** The system will analyze your stocks every weekday at 6:00 PM Beijing time.
+✅ Done! The system will analyze your stocks every **weekday at 6:00 PM Beijing time**.
 
 ---
 
 ## 🧠 How It Works
 
-### Four-Layer Decision Framework
-
-<div align="center">
+### 🏗️ Four-Layer Decision Framework
 
 ```
-Layer 1: Trend Filter
-├─ Is the stock in uptrend? (MA5 > MA10 > MA20)
-└─ ✅ Pass → Continue  ❌ Fail → Skip
-
-Layer 2: Position Filter
-├─ Is the price too far from MA5? (<5% for A-shares)
-└─ ✅ Pass → Continue  ❌ Fail → Skip (avoid chasing highs)
-
-Layer 3: Technical Score
-├─ Base: 70 points
-├─ MACD Golden Cross: +10
-├─ RSI Healthy (30-70): +10
-├─ Volume Pullback: +10
-└─ Score ≥80? → ✅ Buy Signal
-
-Layer 4: Sentiment Filter
-├─ Check recent news
-├─ Any major red flags? → ❌ Veto
-├─ Positive news? → +5 bonus
-└─ Final decision
+┌─────────────────────────────────────────────────────────────┐
+│ LAYER 1: TREND FILTER                                       │
+│ ├─ MA5 > MA10 > MA20? (Multi-head arrangement)             │
+│ └─ [✅ PASS] → Continue | [❌ FAIL] → Skip                 │
+│                                                              │
+│ LAYER 2: POSITION FILTER                                    │
+│ ├─ Price deviation from MA5 < 5%? (Avoid chasing highs)    │
+│ └─ [✅ PASS] → Continue | [❌ FAIL] → Skip                 │
+│                                                              │
+│ LAYER 3: TECHNICAL SCORING (0-100 points)                  │
+│ ├─ Base: 70 points                                          │
+│ ├─ MACD Golden Cross: +10 (trend confirmation)             │
+│ ├─ RSI Healthy (30-70): +10 (momentum balance)             │
+│ ├─ Volume Pullback: +10 (reversal opportunity)            │
+│ └─ Final Score: ≥80? [✅ BUY SIGNAL]                       │
+│                                                              │
+│ LAYER 4: SENTIMENT FILTER                                   │
+│ ├─ Major red flags found? → [🚫 VETO]                      │
+│ ├─ Positive news detected? → [+5 bonus]                    │
+│ └─ Final Decision: [✅ GO] | [⏸️ WAIT]                      │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-</div>
-
-### Example Output
+### 📈 Example Output
 
 ```
-╔══════════════════════════════════════════════════════════════════╗
-║           📊 Stock Analysis Report - 2026-01-22                ║
-╠══════════════════════════════════════════════════════════════════╣
-║  🟢 STRONG BUY | Kweichow Moutai (600519)                      ║
-║  Score: 85/100 | Price: ¥1,820.50                             ║
-╠══════════════════════════════════════════════════════════════════╣
-║  ✅ Trend: Strong Bullish (MA5 > MA10 > MA20)                 ║
-║  ✅ Position: Safe (+0.57% from MA5)                          ║
-║  ✅ Technical: MACD Golden Cross, RSI 58 (Healthy)            ║
-║  ✅ Sentiment: Neutral, no red flags                          ║
-╠══════════════════════════════════════════════════════════════════╣
-║  💡 Trading Plan:                                             ║
-║  • Entry: ¥1,800 - ¥1,820 (near MA5 support)                 ║
-║  • Stop Loss: ¥1,750 (-3.3% below MA20)                      ║
-║  • Target: ¥1,900 (+4.4% upside)                             ║
-╚══════════════════════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════════════╗
+║                 📊 STOCK ANALYSIS DASHBOARD                      ║
+║                        2026-01-22                                ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  🟢 STRONG BUY  │  Kweichow Moutai (600519)                     ║
+║  Score: 85/100  │  Price: ¥1,820.50  │  Change: +2.3%          ║
+║                                                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║  SIGNAL BREAKDOWN:                                               ║
+║                                                                   ║
+║  ✅ Trend Analysis                                              ║
+║     • MA5 > MA10 > MA20 (Strong Bullish Alignment)            ║
+║     • 20-day trend: Consistent uptrend                         ║
+║                                                                   ║
+║  ✅ Price Position                                              ║
+║     • Current: ¥1,820.50  │  MA5: ¥1,809.30                  ║
+║     • Deviation: +0.57% (Within safe range)                    ║
+║                                                                   ║
+║  ✅ Technical Indicators                                        ║
+║     • MACD: Golden Cross (Momentum Building)                   ║
+║     • RSI(14): 58 (Healthy, non-overbought)                    ║
+║     • Volume: +15% vs 5-day average                            ║
+║                                                                   ║
+║  ✅ Sentiment Analysis                                          ║
+║     • Recent news: Neutral to Positive                         ║
+║     • No major red flags detected                              ║
+║     • Analyst consensus: Overweight                            ║
+║                                                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║  📋 TRADING STRATEGY:                                           ║
+║                                                                   ║
+║  ENTRY ZONE         ¥1,800 - ¥1,820 (Near MA5 support)         ║
+║  STOP LOSS          ¥1,750 (-3.3% | Below MA20)                ║
+║  TARGET             ¥1,900 (+4.4% | RSI resistance)            ║
+║  POSITION SIZE      Based on risk tolerance                    ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-## ⚙️ Configuration
+## ⚙️ Configuration Guide
 
-### Required Settings
+### 🔐 Required API Keys
+
+| Service | Purpose | Free Tier | Get Key |
+|---------|---------|-----------|---------|
+| **Google Gemini** | AI Analysis | ✅ 60 req/min | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+| **Stock Code List** | Your watchlist | N/A | Format: `600519,00700.HK,300750` |
+
+### 📢 Optional Notification Channels
+
+| Channel | Setup Time | Features | Best For |
+|---------|-----------|----------|----------|
+| 📱 **WeChat Work** | 2 min | Real-time, rich format | Enterprise teams |
+| 💬 **Feishu** | 2 min | Threading, threads | Tech teams |
+| ✈️ **Telegram** | 3 min | Mobile push, groups | Global users |
+| 📧 **Email** | 2 min | Detailed reports | Archives |
+| 🔗 **Custom Webhook** | 5 min | Your own handler | Integrations |
+
+### 🎨 Environment Variables Template
 
 ```bash
-# Get your free API key from Google AI
-GEMINI_API_KEY=AIzaSy...
+# === AI Configuration ===
+GEMINI_API_KEY=AIzaSy...                              # Required
+GEMINI_MODEL=gemini-2.0-flash-preview                 # Optional
 
-# Add your watchlist (A-shares: 600519, HK stocks: 00700.HK)
-STOCK_LIST=600519,00700.HK,300750
+# === Stock Configuration ===
+STOCK_LIST=600519,00700.HK,300750                     # Required
+DATA_DAYS=60                                           # Historical days
+
+# === News & Sentiment (Optional) ===
+TAVILY_API_KEYS=tvly-xxx,tvly-yyy                     # Sentiment analysis
+BOCHA_API_KEYS=your-bocha-key                         # Chinese news
+
+# === Notifications (Optional) ===
+WECHAT_WEBHOOK_URL=https://qyapi.weixin.qq.com/...   # WeChat Work
+FEISHU_WEBHOOK_URL=https://open.feishu.cn/...        # Feishu Bot
+TELEGRAM_BOT_TOKEN=123456789:ABCdefGHI...            # Telegram
+TELEGRAM_CHAT_ID=123456789                            # Chat ID
+
+# === Advanced ===
+MAX_CONCURRENT=3                                       # Thread pool size
+LOG_LEVEL=INFO                                         # Verbosity
 ```
 
-### Optional Enhancements
+For all options, see [`.env.example`](.env.example)
 
-```bash
-# News sentiment analysis (makes Layer 4 smarter)
-TAVILY_API_KEYS=tvly-...
+---
 
-# Get notified on multiple channels
-WECHAT_WEBHOOK_URL=https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx
-FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxxxx
-TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
-TELEGRAM_CHAT_ID=123456789
+## 🎓 Technical Stack
+
+### Language & Runtime
+- **Python** 3.11+ (async/await support)
+- **Type Hints** (Full type safety with mypy)
+
+### AI & Analysis
+- **Google Gemini 2.0** - LLM reasoning
+- **Tavily/SerpAPI** - News sentiment extraction
+- **Pure Python Math** - No ML framework bloat
+
+### Data Sources (5-layer fallback)
+1. **Efinance** (Primary - A-shares, HK stocks)
+2. **Akshare** (Backup - Realtime quotes, chip data)
+3. **Tushare** (Professional - Historical data)
+4. **Baostock** (Fallback - Fundamentals)
+5. **YFinance** (HK/US stocks)
+
+### Infrastructure
+- **GitHub Actions** (Serverless scheduling)
+- **SQLite** (Lightweight storage)
+- **Docker** (Optional containerization)
+
+---
+
+## 📊 Why This Is Different
+
+| Aspect | Traditional Tools | This System |
+|--------|------------------|------------|
+| **Cost** | $99-999/month | ✅ **$0** |
+| **Setup** | Days of configuration | ✅ **3 minutes** |
+| **Analysis** | Manual chart reading | ✅ **Fully automated** |
+| **Data** | Single vendor, outdated | ✅ **5 sources, real-time** |
+| **Scalability** | Pay-per-seat | ✅ **Unlimited stocks** |
+| **Transparency** | Black box | ✅ **Open source** |
+| **Customization** | Limited | ✅ **Full control** |
+
+---
+
+## 🔔 Notification Channels
+
+Send alerts **simultaneously** to multiple channels:
+
+```
+┌──────────────────────────────────────────────────────────┐
+│         REAL-TIME MULTI-CHANNEL NOTIFICATIONS            │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  📱 WeChat Work          → Corporate chats              │
+│  💬 Feishu               → Team collaboration           │
+│  ✈️ Telegram             → Mobile push                  │
+│  📧 Email                → Detailed reports             │
+│  🔗 Webhook              → Custom integrations          │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
 ```
 
-See [`.env.example`](.env.example) for all options.
+Enable any combination - all channels receive **identical, formatted content** in real-time.
 
 ---
 
-## 📊 What Makes It Different
+## 🛠️ Advanced Customization
 
-| Traditional Analysis | This System |
-|---------------------|-------------|
-| Manual chart reading | ✅ Automated AI analysis |
-| Emotional decisions | ✅ Rule-based scoring |
-| Time-consuming | ✅ Runs automatically |
-| Expensive tools | ✅ 100% free |
-| Single data source | ✅ 5 sources with failover |
-| Missed news events | ✅ Sentiment analysis included |
+### Adjust Decision Parameters
 
----
-
-## 📢 Notification Channels
-
-Get alerts wherever you are:
-
-- 📱 **WeChat Work** - Enterprise WeChat webhook
-- 💬 **Feishu** - Feishu group webhook
-- ✈️ **Telegram** - Bot push notifications
-- 📧 **Email** - SMTP delivery
-- 🔗 **Custom Webhook** - Your own endpoint
-
-Configure as many as you like — the system pushes to all enabled channels simultaneously.
-
----
-
-## 🛠️ Advanced Features
-
-### Customize Your Strategy
-
-Edit `stock_analyzer.py` to adjust decision parameters:
+Edit `stock_analyzer.py`:
 
 ```python
-# Make it more strict or lenient
 MARKET_CONFIG = {
     'A股': {
-        'bias_threshold': 5.0,    # Max 5% from MA5
-        'atr_multiplier': 1.5,    # Stop-loss width
+        'bias_threshold': 5.0,        # Max deviation from MA5
+        'atr_multiplier': 1.5,        # Stop-loss width
+        'volume_shrink_ratio': 0.7,   # Pullback volume threshold
+    },
+    '港股': {
+        'bias_threshold': 6.0,        # Wider for HK volatility
+        'atr_multiplier': 2.0,        # No circuit breaker
     }
 }
 ```
 
-### Add Your Own Data Sources
+### Add Custom Data Source
+
+Create `data_provider/custom_fetcher.py`:
 
 ```python
-# Create data_provider/custom_fetcher.py
 from .base import BaseFetcher
+import pandas as pd
 
 class CustomFetcher(BaseFetcher):
-    def fetch_stock_data(self, code: str, days: int = 60):
-        # Your data source logic
+    def fetch_stock_data(self, code: str, days: int = 60) -> pd.DataFrame:
+        # Your data provider logic
+        # Must return DataFrame with: Date, Open, High, Low, Close, Volume
         pass
 ```
 
 ---
 
+## 📚 Documentation
+
+| Resource | Content |
+|----------|---------|
+| 📖 [**Full Guide**](docs/full-guide.md) | Complete feature documentation |
+| 🔧 [**Troubleshooting**](docs/troubleshooting.md) | Common issues & solutions |
+| 📁 [**Architecture**](PROJECT_STRUCTURE.md) | Code organization & modules |
+| 🚀 [**Deployment**](DEPLOY.md) | Docker, VPS, and cloud setup |
+| 🤝 [**Contributing**](CONTRIBUTING.md) | How to contribute |
+
+---
+
 ## 🗺️ Roadmap
 
-What's coming next:
+- [ ] **Backtesting Engine** — Validate strategies on 5+ years history
+- [ ] **US Stock Support** — NYSE/NASDAQ analysis  
+- [ ] **Web Dashboard** — Real-time monitoring UI (React)
+- [ ] **Portfolio Management** — Multi-position allocation & rebalancing
+- [ ] **Mobile App** — iOS/Android companion
+- [ ] **Model Training** — Fine-tune Gemini on your data
 
-- [ ] **Historical Backtesting** — See how the strategy performed over 5+ years
-- [ ] **US Stock Support** — Add NYSE/NASDAQ coverage
-- [ ] **Web Dashboard** — Real-time monitoring UI
-- [ ] **Portfolio Management** — Multi-position allocation
-
-Have a suggestion? [Open an issue](https://github.com/MINGCHOW/intelligent-stock-decision/issues/new?template=feature_request.md)
+**Suggest a feature?** [Open a feature request](https://github.com/MINGCHOW/intelligent-stock-decision/issues/new?labels=enhancement&template=feature_request.md)
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- How to set up development environment
+- Code style guidelines
+- How to submit pull requests
 
 ---
 
-## 📚 Documentation
+## 📄 License & Credits
 
-- 📖 [Full Guide](docs/full-guide.md) — Complete documentation
-- 🔧 [Troubleshooting](docs/troubleshooting.md) — Common issues & solutions
-- 📁 [Project Structure](PROJECT_STRUCTURE.md) — Code organization
-- 🚀 [Deployment Guide](DEPLOY.md) — Production setup
-
----
-
-## 📄 License
-
-[MIT](LICENSE) © 2026 MINGCHOW
+**License:** [MIT](LICENSE) © 2026 MINGCHOW  
+**Status:** Under active development
 
 ---
 
 ## ⚠️ Disclaimer
 
-**Educational purposes only. Not financial advice.**
+**This is an educational tool. Not financial advice.**
+
+- Use at your own risk
+- Always do your own research (DYOR)
+- Past performance ≠ future results
+- Never invest money you can't afford to lose
 
 ---
 
 <div align="center">
 
-**⭐ Star this project if you find it helpful!**
+### Love this project? Support us! 
 
-**🐛 Found a bug?** [Report it here](https://github.com/MINGCHOW/intelligent-stock-decision/issues/new?template=bug_report.md)
+**⭐ [Star on GitHub](https://github.com/MINGCHOW/intelligent-stock-decision/stargazers)** — Costs nothing, means everything
 
-**💡 Have an idea?** [Suggest a feature](https://github.com/MINGCHOW/intelligent-stock-decision/issues/new?template=feature_request.md)
+**[🐛 Report Bug](https://github.com/MINGCHOW/intelligent-stock-decision/issues/new?labels=bug&template=bug_report.md)** • **[💡 Request Feature](https://github.com/MINGCHOW/intelligent-stock-decision/issues/new?labels=enhancement&template=feature_request.md)** • **[📧 Contact](mailto:mingchow@example.com)**
+
+---
+
+**Made with ❤️ by the OpenCode community**
 
 </div>
