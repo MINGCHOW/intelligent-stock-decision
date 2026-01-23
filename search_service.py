@@ -587,6 +587,27 @@ class BochaSearchProvider(BaseSearchProvider):
             return '未知来源'
 
 
+def _normalize_api_keys(keys) -> List[str]:
+    """
+    规范化 API Keys，确保返回列表格式
+    
+    修复问题：当传入字符串时会被逐字符迭代
+    
+    Args:
+        keys: API Key，可以是字符串（逗号分隔）、列表或 None
+        
+    Returns:
+        API Key 列表
+    """
+    if keys is None:
+        return []
+    if isinstance(keys, str):
+        return [k.strip() for k in keys.split(',') if k.strip()]
+    if isinstance(keys, list):
+        return [k.strip() if isinstance(k, str) else k for k in keys if k]
+    return []
+
+
 class SearchService:
     """
     搜索服务
@@ -613,21 +634,26 @@ class SearchService:
         """
         self._providers: List[BaseSearchProvider] = []
         
+        # 规范化 API Keys（支持字符串和列表两种格式）
+        bocha_keys_list = _normalize_api_keys(bocha_keys)
+        tavily_keys_list = _normalize_api_keys(tavily_keys)
+        serpapi_keys_list = _normalize_api_keys(serpapi_keys)
+        
         # 初始化搜索引擎（按优先级排序）
         # 1. Bocha 优先（中文搜索优化，AI摘要）
-        if bocha_keys:
-            self._providers.append(BochaSearchProvider(bocha_keys))
-            logger.info(f"已配置 Bocha 搜索，共 {len(bocha_keys)} 个 API Key")
+        if bocha_keys_list:
+            self._providers.append(BochaSearchProvider(bocha_keys_list))
+            logger.info(f"已配置 Bocha 搜索，共 {len(bocha_keys_list)} 个 API Key")
         
         # 2. Tavily（免费额度更多，每月 1000 次）
-        if tavily_keys:
-            self._providers.append(TavilySearchProvider(tavily_keys))
-            logger.info(f"已配置 Tavily 搜索，共 {len(tavily_keys)} 个 API Key")
+        if tavily_keys_list:
+            self._providers.append(TavilySearchProvider(tavily_keys_list))
+            logger.info(f"已配置 Tavily 搜索，共 {len(tavily_keys_list)} 个 API Key")
         
         # 3. SerpAPI 作为备选（每月 100 次）
-        if serpapi_keys:
-            self._providers.append(SerpAPISearchProvider(serpapi_keys))
-            logger.info(f"已配置 SerpAPI 搜索，共 {len(serpapi_keys)} 个 API Key")
+        if serpapi_keys_list:
+            self._providers.append(SerpAPISearchProvider(serpapi_keys_list))
+            logger.info(f"已配置 SerpAPI 搜索，共 {len(serpapi_keys_list)} 个 API Key")
         
         if not self._providers:
             logger.warning("未配置任何搜索引擎 API Key，新闻搜索功能将不可用")

@@ -6,6 +6,8 @@
 """
 
 import logging
+from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -252,6 +254,118 @@ class NotificationService:
             )
         else:
             return channel_class()
+
+    def generate_dashboard_report(
+        self,
+        results: List[AnalysisResult],
+        report_date: Optional[str] = None
+    ) -> str:
+        """
+        生成决策仪表盘格式的日报
+
+        Args:
+            results: 分析结果列表
+            report_date: 报告日期（默认今天）
+
+        Returns:
+            Markdown 格式的决策仪表盘日报
+        """
+        if report_date is None:
+            report_date = datetime.now().strftime('%Y-%m-%d')
+
+        # 按评分排序（高分在前）
+        sorted_results = sorted(results, key=lambda x: x.sentiment_score, reverse=True)
+
+        # 统计
+        buy_count = sum(1 for r in results if r.operation_advice in ['买入', '加仓', '强烈买入'])
+        sell_count = sum(1 for r in results if r.operation_advice in ['卖出', '减仓', '强烈卖出'])
+        hold_count = sum(1 for r in results if r.operation_advice in ['持有', '观望'])
+        avg_score = sum(r.sentiment_score for r in results) / len(results) if results else 0
+
+        lines = [
+            f"# 📊 决策仪表盘 - {report_date}",
+            "",
+            f"> 共分析 **{len(results)}** 只股票 | 生成时间：{datetime.now().strftime('%H:%M:%S')}",
+            "",
+            "---",
+            "",
+            "## 📈 市场概览",
+            "",
+            f"| 指标 | 数值 |",
+            f"|------|------|",
+            f"| 🟢 买入信号 | **{buy_count}** |",
+            f"| 🟡 观望信号 | **{hold_count}** |",
+            f"| 🔴 卖出信号 | **{sell_count}** |",
+            f"| 📊 平均评分 | **{avg_score:.1f}** |",
+            "",
+            "---",
+            "",
+            "## 🎯 个股决策",
+            "",
+        ]
+
+        for result in sorted_results:
+            emoji = result.get_emoji()
+            lines.extend([
+                f"### {emoji} {result.name} ({result.code})",
+                "",
+                f"**{result.operation_advice}** | 评分: {result.sentiment_score} | {result.trend_prediction}",
+                "",
+            ])
+
+            # 核心结论
+            core_conclusion = result.get_core_conclusion() if hasattr(result, 'get_core_conclusion') else ""
+            if core_conclusion:
+                lines.extend([f"> {core_conclusion}", ""])
+
+            # 关键点
+            if hasattr(result, 'key_points') and result.key_points:
+                lines.extend([f"**核心看点**: {result.key_points}", ""])
+
+            # 风险提示
+            if hasattr(result, 'risk_warning') and result.risk_warning:
+                lines.extend([f"**风险提示**: {result.risk_warning}", ""])
+
+            lines.append("---")
+            lines.append("")
+
+        lines.extend([
+            "",
+            f"*报告由 Intelligent Stock Decision System 自动生成*",
+        ])
+
+        return "\n".join(lines)
+
+    def save_report_to_file(
+        self,
+        content: str,
+        filename: Optional[str] = None
+    ) -> str:
+        """
+        保存日报到本地文件
+
+        Args:
+            content: 日报内容
+            filename: 文件名（可选，默认按日期生成）
+
+        Returns:
+            保存的文件路径
+        """
+        if filename is None:
+            date_str = datetime.now().strftime('%Y%m%d')
+            filename = f"report_{date_str}.md"
+
+        # 创建报告目录
+        reports_dir = Path("reports")
+        reports_dir.mkdir(parents=True, exist_ok=True)
+
+        filepath = reports_dir / filename
+
+        # 写入文件
+        filepath.write_text(content, encoding='utf-8')
+        logger.info(f"日报已保存: {filepath}")
+
+        return str(filepath)
 
 
 # 单例模式

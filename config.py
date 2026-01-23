@@ -4,7 +4,7 @@
 """
 import os
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 import logging
 
@@ -30,9 +30,9 @@ class Config:
     openai_model: str = "gpt-4o-mini"
 
     # 搜索服务
-    bocha_api_keys: str = ""
-    tavily_api_keys: str = ""
-    serpapi_keys: str = ""
+    bocha_api_keys: List[str] = field(default_factory=list)
+    tavily_api_keys: List[str] = field(default_factory=list)
+    serpapi_keys: List[str] = field(default_factory=list)
 
     # 数据源 Token
     tushare_token: str = ""
@@ -144,9 +144,12 @@ def get_config() -> Config:
         _config_instance.openai_api_key = os.getenv("OPENAI_API_KEY", "")
         _config_instance.openai_base_url = os.getenv("OPENAI_BASE_URL", "")
         _config_instance.openai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-        _config_instance.bocha_api_keys = os.getenv("BOCHA_API_KEYS", "")
-        _config_instance.tavily_api_keys = os.getenv("TAVILY_API_KEYS", "")
-        _config_instance.serpapi_keys = os.getenv("SERPAPI_API_KEYS", "")
+        bocha_keys_str = os.getenv("BOCHA_API_KEYS", "")
+        _config_instance.bocha_api_keys = [k.strip() for k in bocha_keys_str.split(",") if k.strip()]
+        tavily_keys_str = os.getenv("TAVILY_API_KEYS", "")
+        _config_instance.tavily_api_keys = [k.strip() for k in tavily_keys_str.split(",") if k.strip()]
+        serpapi_keys_str = os.getenv("SERPAPI_API_KEYS", "")
+        _config_instance.serpapi_keys = [k.strip() for k in serpapi_keys_str.split(",") if k.strip()]
         _config_instance.tushare_token = os.getenv("TUSHARE_TOKEN", "")
 
         _config_instance.wechat_webhook_url = os.getenv("WECHAT_WEBHOOK_URL", "")
